@@ -37,7 +37,7 @@ jobs:
       - name: Install NDK and CMake
         run: |
           sdkmanager "ndk;25.2.9519653"
-          sdkmanager "cmake;3.22.1"
+          sdkmanager "cmake;4.3.0"
           sdkmanager "build-tools;34.0.0"
           sdkmanager "platforms;android-34"
 
@@ -82,5 +82,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-logs-${{ matrix.arch }}
-          path: android/app/build/outputs/logs/
+          path: |
+            android/app/build/outputs/logs/
+            android/app/.cxx/
+            android/app/build/intermediates/cxx/
           retention-days: 3
