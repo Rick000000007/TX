@@ -10,5 +10,5 @@ ext {
     minSdkVersion = 26
     targetSdkVersion = 34
     ndkVersion = '25.2.9519653'
-    cmakeVersion = '4.3.0'
+    cmakeVersion = '3.22.1'
 }
