@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 
+        TX Terminal - Android Manifest
+        
+        ARCHITECTURE NOTE:
+        This terminal emulator uses Android's 2D Canvas API as the PRIMARY
+        rendering path. The OpenGL ES requirement is NOT strictly necessary
+        for the current implementation but is kept for future experimental
+        GL renderer development.
+        
+        Current renderer status:
+        - Canvas renderer: WORKING (primary)
+        - GL renderer: EXPERIMENTAL (incomplete, glyph rasterization stubbed)
+    -->
+
+    <!-- Network permissions - reserved for future SSH/remote functionality.
+         Currently not used by core terminal functionality. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Storage permissions - only needed for Android 9 and below.
+         Scoped storage is used on Android 10+ via Storage Access Framework. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    
+    <!-- Haptic feedback for keypress -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    
+    <!-- 
+        GLES 3.0 is declared but NOT required.
+        The primary Canvas renderer works without GL.
+        This is kept for future GL renderer experiments.
+    -->
+    <uses-feature android:glEsVersion="0x00030000" android:required="false" />
+    
+    <application
+        android:name=".TXApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TXTerminal"
+        android:extractNativeLibs="true"
+        tools:targetApi="34">
+        
+        <!-- Main Activity - Kotlin Compose UI -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.TXTerminal"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden|keyboard"
+            android:windowSoftInputMode="adjustResize"
+            android:hardwareAccelerated="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <!-- File provider for sharing files -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
+    </application>
+
+</manifest>

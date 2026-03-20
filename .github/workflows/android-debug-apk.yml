@@ -1,0 +1,86 @@
+name: Android Debug APK
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        arch: [arm64-v8a, armeabi-v7a, x86_64]
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Setup JDK 17
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      # 3. Setup Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 4. Install NDK and CMake (must match build.gradle)
+      - name: Install NDK and CMake
+        run: |
+          sdkmanager "ndk;25.2.9519653"
+          sdkmanager "cmake;3.22.1"
+          sdkmanager "build-tools;34.0.0"
+          sdkmanager "platforms;android-34"
+
+      # 5. Cache Gradle dependencies
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 6. Fix Gradle wrapper permissions
+      - name: Fix Gradle Wrapper
+        working-directory: ./android
+        run: |
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+
+      # 7. Build Debug APK
+      - name: Build Debug APK
+        working-directory: ./android
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
+        run: |
+          ./gradlew assembleDebug --no-daemon --stacktrace \
+            -Pandroid.injected.build.abi=${{ matrix.arch }}
+
+      # 8. Upload APK artifact
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tx-debug-${{ matrix.arch }}
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 7
+
+      # 9. Upload build logs on failure
+      - name: Upload Build Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.arch }}
+          path: android/app/build/outputs/logs/
+          retention-days: 3
