@@ -31,8 +31,8 @@ android {
         applicationId "com.tx.terminal"
         minSdk 26
         targetSdk 34
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -101,15 +101,9 @@ android {
     }
 
     packagingOptions {
-        jniLibs {
-            useLegacyPackaging true
-        }
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
-        pickFirst 'lib/arm64-v8a/libc++_shared.so'
-        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
-        pickFirst 'lib/x86_64/libc++_shared.so'
     }
 }
 
