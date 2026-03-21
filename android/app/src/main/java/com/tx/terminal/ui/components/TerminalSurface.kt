@@ -298,23 +298,15 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
             val lines = content.split('\n')
             for (row in 0 until minOf(rows, lines.size)) {
                 val line = lines.getOrNull(row) ?: ""
-                val y = charAscent + (row * charHeight)
+                val y = -charAscent + (row * charHeight)
                 
                 // Render the line
                 canvas.drawText(line, 0f, y, textPaint)
             }
             
             // Render cursor (if visible and blinking)
-            if (cursorVisible) {
-                // Get cursor position from session if available
-                // For now, render at a default position
-                val cursorX = 0f
-                val cursorY = 0f
-                canvas.drawRect(
-                    cursorX, cursorY,
-                    cursorX + charWidth, cursorY + charHeight,
-                    cursorPaint
-                )
+            if (cursorVisible && false) {
+                // Cursor temporarily disabled while debugging text visibility
             }
             
         } finally {
