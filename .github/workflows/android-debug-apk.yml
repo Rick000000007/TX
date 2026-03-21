@@ -79,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tx-release-${{ matrix.arch }}
-          path: android/app/build/intermediates/apk/release/
+          path: android/app/build/outputs/apk/release/
           retention-days: 7
 
       - name: Upload Build Logs
