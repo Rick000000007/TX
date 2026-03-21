@@ -204,8 +204,8 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
         charWidth = textPaint.measureText("M")
         
         // Ensure minimum sizes
-        if (charWidth < 1f) charWidth = size * 0.6f
-        if (charHeight < 1f) charHeight = size * 1.2f
+        if (charWidth < 1f) charWidth = fontSizeSp * 0.6f
+        if (charHeight < 1f) charHeight = fontSizeSp * 1.2f
         
         metricsInitialized = true
     }
