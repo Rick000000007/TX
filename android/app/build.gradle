@@ -17,8 +17,6 @@ android {
             storePassword signingStorePassword
             keyAlias signingKeyAlias
             keyPassword signingKeyPassword
-            v1SigningEnabled true
-            v2SigningEnabled true
         }
     }
     namespace 'com.tx.terminal'
@@ -56,9 +54,6 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            v1SigningEnabled true
-            v2SigningEnabled true
-            v3SigningEnabled true
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
