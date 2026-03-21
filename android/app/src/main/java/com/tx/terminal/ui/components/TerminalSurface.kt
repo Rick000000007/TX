@@ -223,7 +223,6 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
     }
 
     private fun render() {
-        currentSession?.render()
 
         val surface = holder.surface ?: return
         if (!surface.isValid) return
