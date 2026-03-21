@@ -5,23 +5,24 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 30
+
     strategy:
+      fail-fast: false
       matrix:
-        arch: [arm64-v8a, armeabi-v7a, x86_64]
+        arch: [arm64-v8a]
 
     steps:
-      # 1. Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2. Setup JDK 17
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -29,11 +30,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # 3. Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 4. Install NDK and CMake (must match build.gradle)
       - name: Install NDK and CMake
         run: |
           sdkmanager "ndk;25.2.9519653"
@@ -41,7 +40,6 @@ jobs:
           sdkmanager "build-tools;34.0.0"
           sdkmanager "platforms;android-34"
 
-      # 5. Cache Gradle dependencies
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -52,14 +50,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 6. Fix Gradle wrapper permissions
       - name: Fix Gradle Wrapper
         working-directory: ./android
         run: |
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
 
-      # 7. Build Debug APK
       - name: Build Debug APK
         working-directory: ./android
         env:
@@ -68,15 +64,14 @@ jobs:
           ./gradlew assembleDebug --no-daemon --stacktrace \
             -Pandroid.injected.build.abi=${{ matrix.arch }}
 
-      # 8. Upload APK artifact
       - name: Upload Debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: tx-debug-${{ matrix.arch }}
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 7
 
-      # 9. Upload build logs on failure
       - name: Upload Build Logs
         if: failure()
         uses: actions/upload-artifact@v4
