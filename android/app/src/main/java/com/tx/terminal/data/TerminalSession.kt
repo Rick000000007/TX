@@ -56,6 +56,7 @@ class TerminalSession(
     
     init {
         Log.d(TAG, "Creating session: $id")
+        Log.d("TX_DEBUG", "TerminalSession init id=$id name=$name shell=$shellPath")
     }
     
     /**
@@ -79,6 +80,7 @@ class TerminalSession(
             if (nativeHandle == 0L) {
                 Log.e(TAG, "Failed to create native terminal")
                 _errorMessage.value = "Failed to create terminal session"
+                Log.e("TX_DEBUG", "TerminalSession initialize failed: native handle 0")
                 onError?.invoke("Failed to create terminal session")
                 return false
             }
@@ -90,6 +92,7 @@ class TerminalSession(
             startReader()
             
             Log.d(TAG, "Session initialized: $id (handle=$nativeHandle)")
+            Log.d("TX_DEBUG", "TerminalSession initialize success handle=$nativeHandle")
             return true
             
         } catch (e: Exception) {

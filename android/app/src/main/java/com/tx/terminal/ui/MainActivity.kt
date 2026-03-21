@@ -20,6 +20,7 @@ class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.d("TX_DEBUG", "MainActivity onCreate")
         
         // Enable edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(window, false)
