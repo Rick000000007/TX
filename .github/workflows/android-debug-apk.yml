@@ -57,47 +57,47 @@ jobs:
           chmod +x gradlew
 
       - name: Decode signing key
-        run: echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > /tmp/tx-release-key.jks
+        run: echo "${{ secrets.SIGNING_KEY_BASE64 }}" | base64 -d > /tmp/tx-debug-key.jks
 
       - name: Build Release APK
         working-directory: ./android
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
-          SIGNING_STORE_FILE: /tmp/tx-release-key.jks
+          SIGNING_STORE_FILE: /tmp/tx-debug-key.jks
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace \
+          ./gradlew assembleDebug --no-daemon --stacktrace \
             -Pandroid.injected.build.abi=${{ matrix.arch }}
 
       - name: List APK files
         run: |
           echo "=== outputs/apk/release ==="
           find android/app/build/outputs/apk/release -maxdepth 2 -type f 2>/dev/null | sort || true
-          echo "=== intermediates/apk/release ==="
-          find android/app/build/intermediates/apk/release -maxdepth 2 -type f 2>/dev/null | sort || true
+          echo "=== outputs/apk/debug ==="
+          find android/app/build/outputs/apk/debug -maxdepth 2 -type f 2>/dev/null | sort || true
 
       - name: Verify APK
         run: |
-          ls -l android/app/build/intermediates/apk/release/ || true
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs android/app/build/intermediates/apk/release/app-release.apk
+          ls -l android/app/build/outputs/apk/debug/ || true
+          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Verify APK
         run: |
           echo "=== APK FILES ==="
-          ls -l android/app/build/intermediates/apk/release/ || true
+          ls -l android/app/build/outputs/apk/debug/ || true
           echo "=== APKSIGNER VERIFY ==="
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs android/app/build/intermediates/apk/release/app-release.apk || true
+          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs android/app/build/outputs/apk/debug/app-debug.apk || true
           echo "=== ZIP CONTENTS ==="
-          unzip -l android/app/build/intermediates/apk/release/app-release.apk | head -80 || true
+          unzip -l android/app/build/outputs/apk/debug/app-debug.apk | head -80 || true
 
       - name: Upload Release APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: tx-release-${{ matrix.arch }}
-          path: android/app/build/intermediates/apk/release/app-release.apk
+          name: tx-debug-${{ matrix.arch }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
 
       - name: Upload Build Logs
