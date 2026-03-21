@@ -26,6 +26,8 @@ set(TX_CORE_SOURCES
     ${TX_ROOT}/src/screen.cpp
     ${TX_ROOT}/src/terminal.cpp
     ${TX_ROOT}/src/config.cpp
+    ${TX_ROOT}/src/pty.cpp
+    ${TX_ROOT}/src/renderer.cpp
 )
 
 # Core static library
