@@ -62,7 +62,8 @@ jobs:
           ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
         run: |
           ./gradlew assembleDebug --no-daemon --stacktrace \
-            -Pandroid.injected.build.abi=${{ matrix.arch }}
+            -Pandroid.injected.build.abi=${{ matrix.arch }} \
+            -Pandroid.injected.testOnly=false
 
       - name: List APK files
         run: find android -type f | grep -i '\.apk\|\.aab' || true
