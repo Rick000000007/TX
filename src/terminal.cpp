@@ -16,10 +16,8 @@ bool Terminal::initialize(const TerminalConfig& config) {
     // Initialize screen
     screen_.resize(config.cols, config.rows);
     
-    // Initialize renderer
-    if (!renderer_.initialize(800, 600)) {  // Default size, will be resized
-        return false;
-    }
+    
+    // Renderer is initialized later, after EGL context is ready
     renderer_.setConfig(config.render);
     
     // Initialize PTY
@@ -131,6 +129,15 @@ void Terminal::onMouseScroll(int delta) {
     } else {
         scrollDown(3);
     }
+}
+
+bool Terminal::initializeRenderer(int width, int height) {
+    if (!renderer_.initialize(width, height)) {
+        return false;
+    }
+    renderer_.setConfig(config_.render);
+    handleResize(width, height);
+    return true;
 }
 
 void Terminal::onResize(int width, int height) {

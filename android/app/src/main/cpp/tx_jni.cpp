@@ -296,7 +296,11 @@ Java_com_tx_terminal_jni_NativeTerminal_setSurface(
     int height = ANativeWindow_getHeight(window);
     
     if (instance->terminal) {
-        instance->terminal->onResize(width, height);
+        if (!instance->terminal->initializeRenderer(width, height)) {
+            LOGE("Failed to initialize renderer after EGL setup");
+            instance->cleanupEGL();
+            return;
+        }
     }
     
     LOGD("Surface set: %dx%d", width, height);

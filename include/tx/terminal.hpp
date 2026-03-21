@@ -44,6 +44,7 @@ public:
     void onMouseButton(int button, bool pressed, int mods);
     void onMouseScroll(int delta);
     void onResize(int width, int height);
+    bool initializeRenderer(int width, int height);
     
     // Text input
     void sendText(std::string_view text);
