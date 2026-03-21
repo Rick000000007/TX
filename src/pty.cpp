@@ -108,6 +108,11 @@ PTYResult PTY::open(const std::string& shell, const std::vector<std::string>& en
             _exit(1);
         }
         
+        // Make slave PTY the controlling terminal
+        if (ioctl(slave_fd, TIOCSCTTY, 0) < 0) {
+            _exit(1);
+        }
+
         // Set terminal attributes
         struct termios tios;
         if (tcgetattr(slave_fd, &tios) == 0) {
