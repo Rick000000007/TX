@@ -1,4 +1,14 @@
 #include "tx/terminal.hpp"
+#if defined(TX_ANDROID)
+#include <android/log.h>
+#define LOG_TAG "TX_TERMINAL"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#else
+#include <iostream>
+#define LOGD(...) do { } while(0)
+#define LOGE(...) std::cerr
+#endif
 #include <sstream>
 #include <cstring>
 
