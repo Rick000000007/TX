@@ -29,9 +29,12 @@ class MainActivity : ComponentActivity() {
             TXTerminalTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = androidx.compose.ui.graphics.Color.Green
                 ) {
-                    MainScreen(viewModel = viewModel)
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Text("MAINACTIVITY DEBUG", color = androidx.compose.ui.graphics.Color.Black)
+                        MainScreen(viewModel = viewModel)
+                    }
                 }
             }
         }
