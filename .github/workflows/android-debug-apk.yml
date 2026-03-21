@@ -56,24 +56,23 @@ jobs:
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
 
-      - name: Build Debug APK
+      - name: Build Release APK
         working-directory: ./android
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
         run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace \
-            -Pandroid.injected.build.abi=${{ matrix.arch }} \
-            -Pandroid.injected.testOnly=false
+          ./gradlew assembleRelease --no-daemon --stacktrace \
+            -Pandroid.injected.build.abi=${{ matrix.arch }}
 
       - name: List APK files
         run: find android -type f | grep -i '\.apk\|\.aab' || true
 
-      - name: Upload Debug APK
+      - name: Upload Release APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: tx-debug-${{ matrix.arch }}
-          path: android/app/build/intermediates/apk/debug/app-debug.apk
+          name: tx-release-${{ matrix.arch }}
+          path: android/app/build/outputs/apk/release/*.apk
           retention-days: 7
 
       - name: Upload Build Logs
