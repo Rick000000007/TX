@@ -71,7 +71,7 @@ fun TerminalSurface(
                 view.updateFontSize(fontSize)
                 view.setSession(activeSession)
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Red)
         )
     }
 }
