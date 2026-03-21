@@ -115,11 +115,19 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
         isFocusableInTouchMode = true
         isClickable = true
         isLongClickable = true
+        isFocusable = true
+        isFocusableInTouchMode = true
+        isEnabled = true
+        setWillNotDraw(false)
 
         setOnClickListener {
             requestFocus()
             requestFocusFromTouch()
-            showKeyboard()
+            post {
+                requestFocus()
+                requestFocusFromTouch()
+                showKeyboard()
+            }
         }
     }
 
