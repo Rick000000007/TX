@@ -64,6 +64,9 @@ jobs:
           ./gradlew assembleDebug --no-daemon --stacktrace \
             -Pandroid.injected.build.abi=${{ matrix.arch }}
 
+      - name: List APK files
+        run: find android -type f | grep -i '\.apk\|\.aab' || true
+
       - name: Upload Debug APK
         if: success()
         uses: actions/upload-artifact@v4
