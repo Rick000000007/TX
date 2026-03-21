@@ -2,6 +2,7 @@ package com.tx.terminal.ui.components
 
 import android.content.Context
 import android.graphics.Paint
+import android.graphics.Canvas
 import android.graphics.Typeface
 import android.view.KeyEvent
 import android.view.SurfaceHolder
@@ -223,6 +224,29 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
 
     private fun render() {
         currentSession?.render()
+
+        val surface = holder.surface ?: return
+        if (!surface.isValid) return
+
+        try {
+            val canvas: Canvas = holder.lockCanvas() ?: return
+            canvas.drawColor(backgroundColorInt)
+
+            val text = currentSession?.getScreenContent().orEmpty()
+            val lines = if (text.isEmpty()) listOf("[TX DEBUG] screen empty") else text.split("\n")
+
+            val lineHeight = (paint.fontMetrics.descent - paint.fontMetrics.ascent).coerceAtLeast(1f)
+            var y = -paint.fontMetrics.ascent
+
+            for (line in lines.take(200)) {
+                canvas.drawText(line, 8f, y, paint)
+                y += lineHeight
+                if (y > height - 8f) break
+            }
+
+            holder.unlockCanvasAndPost(canvas)
+        } catch (_: Exception) {
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
