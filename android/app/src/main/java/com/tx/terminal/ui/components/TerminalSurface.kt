@@ -54,9 +54,14 @@ fun TerminalSurface(
 
     Box(
         modifier = modifier
-            .background(Color(backgroundColor))
+            .background(Color.Yellow)
     ) {
-        AndroidView(
+        Text(
+        text = "TX COMPOSE DEBUG",
+        color = Color.Black
+    )
+
+    AndroidView(
             factory = { ctx ->
                 TerminalSurfaceView(ctx).apply {
                     this.viewModel = viewModel
