@@ -212,3 +212,4 @@ SOFTWARE.
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - Modern Android UI toolkit
 - [Termux](https://termux.dev/) - Inspiration for terminal functionality
 
+ 
