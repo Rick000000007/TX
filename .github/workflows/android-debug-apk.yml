@@ -83,6 +83,15 @@ jobs:
           ls -l android/app/build/intermediates/apk/release/ || true
           $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs android/app/build/intermediates/apk/release/app-release.apk
 
+      - name: Verify APK
+        run: |
+          echo "=== APK FILES ==="
+          ls -l android/app/build/intermediates/apk/release/ || true
+          echo "=== APKSIGNER VERIFY ==="
+          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner verify --verbose --print-certs android/app/build/intermediates/apk/release/app-release.apk || true
+          echo "=== ZIP CONTENTS ==="
+          unzip -l android/app/build/intermediates/apk/release/app-release.apk | head -80 || true
+
       - name: Upload Release APK
         if: success()
         uses: actions/upload-artifact@v4
