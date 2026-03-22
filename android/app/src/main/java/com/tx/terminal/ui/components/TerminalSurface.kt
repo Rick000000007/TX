@@ -94,8 +94,14 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionPaint = Paint().apply {
-        color = android.graphics.Color.argb(120, 80, 140, 255)
+        color = android.graphics.Color.WHITE
         style = Paint.Style.FILL
+    }
+
+    private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        typeface = Typeface.MONOSPACE
+        color = android.graphics.Color.BLACK
+        textSize = fontSizeSp
     }
 
     private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -301,18 +307,23 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 val charX = left
                 val right = left + cellWidth
 
-                if (session != null) {
+                val isSelected = if (session != null) {
                     try {
-                        if (NativeTerminal.isCellSelected(session.getNativeHandle(), col, row)) {
-                            canvas.drawRect(left, top, right, bottom, selectionPaint)
-                        }
+                        NativeTerminal.isCellSelected(session.getNativeHandle(), col, row)
                     } catch (_: Exception) {
+                        false
                     }
+                } else {
+                    false
+                }
+
+                if (isSelected) {
+                    canvas.drawRect(left, top, right, bottom, selectionPaint)
                 }
 
                 if (col < line.length) {
                     val ch = line[col].toString()
-                    canvas.drawText(ch, charX, baselineY, paint)
+                    canvas.drawText(ch, charX, baselineY, if (isSelected) selectedTextPaint else paint)
                 }
             }
         }
