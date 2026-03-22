@@ -386,9 +386,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     override fun performClick(): Boolean {
-        super.performClick()
-        showKeyboard()
-        return true
+        return super.performClick()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -409,7 +407,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
                 requestFocus()
                 requestFocusFromTouch()
-                performClick()
+                showKeyboard()
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -420,36 +418,33 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-    if (isSelecting || longPressTriggered) {
-        val selectedText = currentSession?.copySelection().orEmpty()
+                if (isSelecting || longPressTriggered) {
+                    val selectedText = currentSession?.copySelection().orEmpty()
 
-        if (selectedText.isNotEmpty()) {
-            clipboard.setPrimaryClip(
-                android.content.ClipData.newPlainText(
-                    "Terminal Selection",
-                    selectedText
-                )
-            )
-            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "No text selected", Toast.LENGTH_SHORT).show()
-        }
+                    if (selectedText.isNotEmpty()) {
+                        clipboard.setPrimaryClip(
+                            android.content.ClipData.newPlainText(
+                                "Terminal Selection",
+                                selectedText
+                            )
+                        )
+                        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                    }
 
-        isSelecting = false
-        longPressTriggered = false
+                    currentSession?.let { session ->
+                        try {
+                            NativeTerminal.clearSelection(session.getNativeHandle())
+                        } catch (_: Exception) {
+                        }
+                    }
 
-        currentSession?.let { session ->
-            try {
-                NativeTerminal.clearSelection(session.getNativeHandle())
-            } catch (_: Exception) {
+                    isSelecting = false
+                    longPressTriggered = false
+                    requestRender()
+                } else {
+                    showKeyboard()
+                }
             }
-        }
-
-        requestRender()
-    } else {
-        showKeyboard()
-    }
-}
         }
         return true
     }
