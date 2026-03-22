@@ -420,10 +420,36 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                if (!isSelecting) {
-                    showKeyboard()
-                }
+    if (isSelecting || longPressTriggered) {
+        val selectedText = currentSession?.copySelection().orEmpty()
+
+        if (selectedText.isNotEmpty()) {
+            clipboard.setPrimaryClip(
+                android.content.ClipData.newPlainText(
+                    "Terminal Selection",
+                    selectedText
+                )
+            )
+            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "No text selected", Toast.LENGTH_SHORT).show()
+        }
+
+        isSelecting = false
+        longPressTriggered = false
+
+        currentSession?.let { session ->
+            try {
+                NativeTerminal.clearSelection(session.getNativeHandle())
+            } catch (_: Exception) {
             }
+        }
+
+        requestRender()
+    } else {
+        showKeyboard()
+    }
+}
         }
         return true
     }
