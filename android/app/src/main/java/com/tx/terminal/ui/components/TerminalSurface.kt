@@ -182,6 +182,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private fun requestRender() {
         renderRequested = true
+        postInvalidate()
     }
 
     private fun render() {
