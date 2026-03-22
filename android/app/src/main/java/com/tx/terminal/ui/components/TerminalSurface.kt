@@ -319,15 +319,26 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         if (session != null) {
             try {
-                val cursorCol = NativeTerminal.getCursorCol(session.getNativeHandle())
+                val rawCursorCol = NativeTerminal.getCursorCol(session.getNativeHandle())
                 val cursorRow = NativeTerminal.getCursorRow(session.getNativeHandle())
 
-                if (cursorCol in 0 until terminalColumns && cursorRow in 0 until terminalRows) {
-                    val left = horizontalPadding + (cursorCol * cellWidth)
-                    val top = verticalPadding + (cursorRow * cellHeight)
-                    val right = left + cellWidth
-                    val bottom = top + cellHeight
-                    canvas.drawRect(left, top, right, bottom, cursorPaint)
+                if (cursorRow in 0 until terminalRows) {
+                    val line = if (cursorRow < lines.size) lines[cursorRow] else ""
+                    val visibleLine = if (line.length > terminalColumns) {
+                        line.take(terminalColumns)
+                    } else {
+                        line
+                    }
+
+                    val cursorCol = rawCursorCol.coerceIn(0, visibleLine.length)
+
+                    if (cursorCol in 0..terminalColumns) {
+                        val left = horizontalPadding + (cursorCol * cellWidth)
+                        val top = verticalPadding + (cursorRow * cellHeight)
+                        val right = left + cellWidth
+                        val bottom = top + cellHeight
+                        canvas.drawRect(left, top, right, bottom, cursorPaint)
+                    }
                 }
             } catch (_: Exception) {
             }
