@@ -11,6 +11,7 @@
 #include <queue>
 #include <string>
 #include <unordered_map>
+#include <sys/stat.h>
 
 #include "tx/terminal.hpp"
 #include "tx/config.hpp"
@@ -19,6 +20,7 @@
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 
 using namespace tx;
 
@@ -171,6 +173,20 @@ static std::mutex instances_mutex;
 static std::unordered_map<jlong, std::unique_ptr<TerminalInstance>> instances;
 static jlong next_handle = 1;
 
+// Helper to ensure directory exists
+static bool ensureDirectoryExists(const std::string& path) {
+    struct stat st;
+    if (stat(path.c_str(), &st) == 0) {
+        return S_ISDIR(st.st_mode);
+    }
+    // Try to create
+    if (mkdir(path.c_str(), 0755) == 0) {
+        LOGD("Created directory: %s", path.c_str());
+        return true;
+    }
+    return false;
+}
+
 extern "C" {
 
 JNIEXPORT jlong JNICALL
@@ -180,7 +196,9 @@ Java_com_tx_terminal_jni_NativeTerminal_create(
     jint columns,
     jint rows,
     jstring shell_path,
-    jstring initial_command
+    jstring initial_command,
+    jstring working_directory,
+    jobjectArray env_vars
 ) {
     LOGD("Creating terminal: %dx%d", columns, rows);
     
@@ -190,6 +208,21 @@ Java_com_tx_terminal_jni_NativeTerminal_create(
     const char* shell_str = env->GetStringUTFChars(shell_path, nullptr);
     std::string shell(shell_str);
     env->ReleaseStringUTFChars(shell_path, shell_str);
+    
+    // Get working directory
+    std::string cwd;
+    if (working_directory) {
+        const char* cwd_str = env->GetStringUTFChars(working_directory, nullptr);
+        cwd = cwd_str;
+        env->ReleaseStringUTFChars(working_directory, cwd_str);
+        LOGD("Working directory: %s", cwd.c_str());
+        
+        // Ensure working directory exists
+        if (!cwd.empty() && !ensureDirectoryExists(cwd)) {
+            LOGW("Working directory doesn't exist and couldn't be created: %s", cwd.c_str());
+            // Will fall back in PTY::open
+        }
+    }
     
     // Get initial command if provided
     std::string init_cmd;
@@ -204,9 +237,32 @@ Java_com_tx_terminal_jni_NativeTerminal_create(
     config.cols = columns;
     config.rows = rows;
     config.shell = shell;
+    config.cwd = cwd;  // Set working directory
+    
+    // Build environment variables
+    // Start with defaults
     config.env.push_back("TERM=xterm-256color");
     config.env.push_back("COLORTERM=truecolor");
     config.env.push_back("ANDROID=1");
+    config.env.push_back("ANDROID_ROOT=/system");
+    config.env.push_back("ANDROID_DATA=/data");
+    
+    // Add custom environment variables from Java
+    if (env_vars) {
+        jsize env_count = env->GetArrayLength(env_vars);
+        for (jsize i = 0; i < env_count; i++) {
+            jstring env_var = (jstring)env->GetObjectArrayElement(env_vars, i);
+            if (env_var) {
+                const char* var_str = env->GetStringUTFChars(env_var, nullptr);
+                if (var_str) {
+                    config.env.push_back(var_str);
+                    LOGD("Added env var: %s", var_str);
+                }
+                env->ReleaseStringUTFChars(env_var, var_str);
+                env->DeleteLocalRef(env_var);
+            }
+        }
+    }
     
     // Create terminal
     instance->terminal = std::make_unique<Terminal>();
