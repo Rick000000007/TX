@@ -58,26 +58,8 @@ fun TerminalSurface(
             .background(Color.Yellow)
     ) {
         Text(
-            text = "TERMINALSURFACE DEBUG",
+            text = "TERMINALSURFACE ONLY COMPOSE",
             color = Color.Black
-        )
-
-        AndroidView(
-            factory = { ctx ->
-                TerminalSurfaceView(ctx).apply {
-                    this.viewModel = viewModel
-                    updateColors(backgroundColor, foregroundColor)
-                    updateFontSize(fontSize)
-                    setSession(activeSession)
-                }
-            },
-            update = { view ->
-                view.viewModel = viewModel
-                view.updateColors(backgroundColor, foregroundColor)
-                view.updateFontSize(fontSize)
-                view.setSession(activeSession)
-            },
-            modifier = Modifier.fillMaxSize()
         )
     }
 }
