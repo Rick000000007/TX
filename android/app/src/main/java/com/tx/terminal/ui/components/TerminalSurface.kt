@@ -520,15 +520,14 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private fun updateSelection(x: Float, y: Float) {
         val colBias = cellWidth * 0.5f
-        val rowBias = cellHeight * 0.5f
 
         val startCol = (((selectionStartX - horizontalPadding + colBias) / cellWidth).toInt())
             .coerceIn(0, terminalColumns - 1)
-        val startRow = (((selectionStartY - verticalPadding - baselineOffset + rowBias) / cellHeight).toInt())
+        val startRow = (((selectionStartY - verticalPadding) / cellHeight).toInt())
             .coerceIn(0, terminalRows - 1)
         val endCol = (((x - horizontalPadding + colBias) / cellWidth).toInt())
             .coerceIn(0, terminalColumns - 1)
-        val endRow = (((y - verticalPadding - baselineOffset + rowBias) / cellHeight).toInt())
+        val endRow = (((y - verticalPadding) / cellHeight).toInt())
             .coerceIn(0, terminalRows - 1)
 
         currentSession?.let { session ->
