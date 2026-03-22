@@ -322,8 +322,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
                 if (cursorCol in 0 until terminalColumns && cursorRow in 0 until terminalRows) {
                     val left = horizontalPadding + (cursorCol * cellWidth)
-                    val top = verticalPadding + (cursorRow * cellHeight)
-                    val bottom = top + cellHeight
+                    val top = verticalPadding + (cursorRow * cellHeight) + (cellHeight * 0.12f)
+                    val bottom = top + (cellHeight * 0.76f)
                     canvas.drawLine(left, top, left, bottom, cursorPaint)
                 }
             } catch (_: Exception) {
