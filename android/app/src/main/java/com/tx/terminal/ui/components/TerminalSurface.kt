@@ -99,9 +99,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.WHITE
-        style = Paint.Style.STROKE
-        strokeWidth = 3f
+        color = android.graphics.Color.argb(140, 255, 255, 255)
+        style = Paint.Style.FILL
     }
 
     private var renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -200,9 +199,11 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val fm = paint.fontMetrics
         textAscent = fm.ascent
         baselineOffset = -fm.ascent
-        val sample = "MMMMMMMMMM"
-        cellWidth = (paint.measureText(sample) / sample.length).coerceAtLeast(1f)
-        cellHeight = (fm.descent - fm.ascent).coerceAtLeast(1f)
+
+        val bounds = android.graphics.Rect()
+        paint.getTextBounds("W", 0, 1, bounds)
+        cellWidth = paint.measureText("W").coerceAtLeast(bounds.width().toFloat()).coerceAtLeast(1f)
+        cellHeight = (fm.descent - fm.ascent).coerceAtLeast(bounds.height().toFloat()).coerceAtLeast(1f)
     }
 
     private fun applyTerminalSize() {
@@ -323,9 +324,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
                 if (cursorCol in 0 until terminalColumns && cursorRow in 0 until terminalRows) {
                     val left = horizontalPadding + (cursorCol * cellWidth)
+                    val top = verticalPadding + (cursorRow * cellHeight)
                     val right = left + cellWidth
-                    val bottom = verticalPadding + ((cursorRow + 1) * cellHeight) - 2f
-                    canvas.drawLine(left, bottom, right, bottom, cursorPaint)
+                    val bottom = top + cellHeight
+                    canvas.drawRect(left, top, right, bottom, cursorPaint)
                 }
             } catch (_: Exception) {
             }
