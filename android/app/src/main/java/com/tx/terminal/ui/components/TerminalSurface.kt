@@ -122,6 +122,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private var cellWidth = 1f
     private var cellHeight = 1f
+    private var textAscent = 0f
+    private var baselineOffset = 0f
     private var terminalColumns = 80
     private var terminalRows = 24
 
@@ -178,8 +180,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private fun recalculateMetrics() {
-        cellWidth = paint.measureText("M").coerceAtLeast(1f)
         val fm = paint.fontMetrics
+        textAscent = fm.ascent
+        baselineOffset = -fm.ascent
+        cellWidth = (paint.measureText("WWWWWWWWWW") / 10f).coerceAtLeast(1f)
         cellHeight = (fm.descent - fm.ascent).coerceAtLeast(1f)
     }
 
@@ -263,7 +267,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val text = currentSession?.getScreenContent().orEmpty()
         val lines = if (text.isEmpty()) emptyList() else text.split("\n")
 
-        val baselineOffset = -paint.fontMetrics.ascent
         var y = verticalPadding + baselineOffset
 
         for (line in lines.take(terminalRows)) {
