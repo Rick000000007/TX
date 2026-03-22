@@ -131,6 +131,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     private var selectionStartY = 0f
     private var isSelecting = false
     private var longPressTriggered = false
+    private var hasPersistentSelection = false
 
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     private val clipboard =
@@ -517,10 +518,12 @@ class TerminalSurfaceView(context: Context) : View(context) {
                         Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
                     }
 
-                    currentSession?.let { session ->
-                        try {
-                            NativeTerminal.clearSelection(session.getNativeHandle())
-                        } catch (_: Exception) {
+                    if (!hasPersistentSelection) {
+                        currentSession?.let { session ->
+                            try {
+                                NativeTerminal.clearSelection(session.getNativeHandle())
+                            } catch (_: Exception) {
+                            }
                         }
                     }
 
@@ -540,6 +543,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private fun startSelection() {
         isSelecting = true
+        hasPersistentSelection = true
         Toast.makeText(context, "Selection mode - drag to select", Toast.LENGTH_SHORT).show()
     }
 
