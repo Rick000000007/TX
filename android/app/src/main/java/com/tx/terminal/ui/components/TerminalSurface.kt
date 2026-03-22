@@ -285,36 +285,34 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val text = session?.getScreenContent().orEmpty()
         val lines = if (text.isEmpty()) emptyList() else text.split("\n")
 
-        var baselineY = verticalPadding + baselineOffset
-
         for (row in 0 until terminalRows) {
-            if (baselineY > height - verticalPadding) break
+            val top = verticalPadding + (row * cellHeight)
+            val baselineY = top + baselineOffset
+            val bottom = top + cellHeight
+
+            if (top > height - verticalPadding) break
 
             val line = if (row < lines.size) lines[row] else ""
-            val visibleLine = if (line.length > terminalColumns) {
-                line.take(terminalColumns)
-            } else {
-                line
-            }
 
-            if (session != null) {
-                val top = baselineY - baselineOffset
-                val bottom = top + cellHeight
+            for (col in 0 until terminalColumns) {
+                val left = horizontalPadding + (col * cellWidth)
+                val charX = left
+                val right = left + cellWidth
 
-                for (col in 0 until terminalColumns) {
+                if (session != null) {
                     try {
                         if (NativeTerminal.isCellSelected(session.getNativeHandle(), col, row)) {
-                            val left = horizontalPadding + (col * cellWidth)
-                            val right = left + cellWidth
                             canvas.drawRect(left, top, right, bottom, selectionPaint)
                         }
                     } catch (_: Exception) {
                     }
                 }
-            }
 
-            canvas.drawText(visibleLine, horizontalPadding, baselineY, paint)
-            baselineY += cellHeight
+                if (col < line.length) {
+                    val ch = line[col].toString()
+                    canvas.drawText(ch, charX, baselineY, paint)
+                }
+            }
         }
 
         if (session != null) {
@@ -452,6 +450,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                parent?.requestDisallowInterceptTouchEvent(true)
                 selectionStartX = event.x
                 selectionStartY = event.y
                 isSelecting = false
@@ -472,12 +471,14 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
             MotionEvent.ACTION_MOVE -> {
                 if (longPressTriggered || isSelecting) {
+                    parent?.requestDisallowInterceptTouchEvent(true)
                     isSelecting = true
                     updateSelection(event.x, event.y)
                 }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                parent?.requestDisallowInterceptTouchEvent(false)
                 if (isSelecting || longPressTriggered) {
                     val selectedText = currentSession?.copySelection().orEmpty()
 
