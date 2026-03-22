@@ -8,30 +8,36 @@ namespace tx {
 // Selection helpers
 bool Selection::contains(int col, int row) const {
     if (!active) return false;
-    
-    int start_r = std::min(start_row, end_row);
-    int end_r = std::max(start_row, end_row);
-    
-    if (row < start_r || row > end_r) return false;
-    
-    if (rectangular) {
-        int start_c = std::min(start_col, end_col);
-        int end_c = std::max(start_col, end_col);
-        return col >= start_c && col <= end_c;
-    } else {
-        if (row == start_r && row == end_r) {
-            int start_c = std::min(start_col, end_col);
-            int end_c = std::max(start_col, end_col);
-            return col >= start_c && col <= end_c;
-        } else if (row == start_r) {
-            return col >= (start_row < end_row ? start_col : end_col);
-        } else if (row == end_r) {
-            return col <= (start_row < end_row ? end_col : start_col);
-        }
-        return true;
-    }
-}
 
+    int raw_start_col = std::min(start_col, end_col);
+    int raw_end_col = std::max(start_col, end_col);
+
+    if (rectangular) {
+        int start_r = std::min(start_row, end_row);
+        int end_r = std::max(start_row, end_row);
+        if (row < start_r || row > end_r) return false;
+        return col >= raw_start_col && col <= raw_end_col;
+    }
+
+    bool forward =
+        (start_row < end_row) ||
+        (start_row == end_row && start_col <= end_col);
+
+    int norm_start_row = forward ? start_row : end_row;
+    int norm_start_col = forward ? start_col : end_col;
+    int norm_end_row = forward ? end_row : start_row;
+    int norm_end_col = forward ? end_col : start_col;
+
+    if (row < norm_start_row || row > norm_end_row) return false;
+
+    if (norm_start_row == norm_end_row) {
+        return col >= norm_start_col && col <= norm_end_col;
+    }
+
+    if (row == norm_start_row) return col >= norm_start_col;
+    if (row == norm_end_row) return col <= norm_end_col;
+    return true;
+}
 // Damage tracking
 void Screen::Damage::addRow(int row) {
     if (full_screen) return;
