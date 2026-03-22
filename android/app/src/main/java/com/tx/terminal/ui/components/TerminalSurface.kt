@@ -183,7 +183,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val fm = paint.fontMetrics
         textAscent = fm.ascent
         baselineOffset = -fm.ascent
-        cellWidth = (paint.measureText("WWWWWWWWWW") / 10f).coerceAtLeast(1f)
+        cellWidth = paint.measureText("W").coerceAtLeast(1f)
         cellHeight = (fm.descent - fm.ascent).coerceAtLeast(1f)
     }
 
@@ -410,6 +410,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
                         longPressTriggered = true
                         vibrate()
                         startSelection()
+                        updateSelection(selectionStartX, selectionStartY)
                     }
                 }, 500)
 
@@ -464,9 +465,9 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private fun updateSelection(x: Float, y: Float) {
         val startCol = (((selectionStartX - horizontalPadding) / cellWidth).toInt()).coerceIn(0, terminalColumns - 1)
-        val startRow = (((selectionStartY - verticalPadding) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
+        val startRow = (((selectionStartY - verticalPadding - baselineOffset) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
         val endCol = (((x - horizontalPadding) / cellWidth).toInt()).coerceIn(0, terminalColumns - 1)
-        val endRow = (((y - verticalPadding) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
+        val endRow = (((y - verticalPadding - baselineOffset) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
 
         currentSession?.let { session ->
             try {
