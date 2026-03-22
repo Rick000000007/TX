@@ -98,6 +98,12 @@ class TerminalSurfaceView(context: Context) : View(context) {
         style = Paint.Style.FILL
     }
 
+    private val cursorPaint = Paint().apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+    }
+
     private var renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     @Volatile
@@ -309,6 +315,22 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
             canvas.drawText(visibleLine, horizontalPadding, baselineY, paint)
             baselineY += cellHeight
+        }
+
+        if (session != null) {
+            try {
+                val cursorCol = NativeTerminal.getCursorCol(session.getNativeHandle())
+                val cursorRow = NativeTerminal.getCursorRow(session.getNativeHandle())
+
+                if (cursorCol in 0 until terminalColumns && cursorRow in 0 until terminalRows) {
+                    val left = horizontalPadding + (cursorCol * cellWidth)
+                    val top = verticalPadding + (cursorRow * cellHeight)
+                    val right = left + cellWidth
+                    val bottom = top + cellHeight
+                    canvas.drawRect(left, top, right, bottom, cursorPaint)
+                }
+            } catch (_: Exception) {
+            }
         }
     }
 

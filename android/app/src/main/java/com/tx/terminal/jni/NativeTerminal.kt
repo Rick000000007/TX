@@ -129,6 +129,12 @@ object NativeTerminal {
      */
     @JvmStatic
     external fun getRows(handle: Long): Int
+
+    @JvmStatic
+    external fun getCursorCol(handle: Long): Int
+
+    @JvmStatic
+    external fun getCursorRow(handle: Long): Int
     
     /**
      * Check if terminal is still running

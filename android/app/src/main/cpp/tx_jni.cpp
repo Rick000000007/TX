@@ -541,6 +541,34 @@ Java_com_tx_terminal_jni_NativeTerminal_getRows(
     return 24;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_tx_terminal_jni_NativeTerminal_getCursorCol(
+    JNIEnv* env,
+    jclass clazz,
+    jlong handle
+) {
+    std::lock_guard<std::mutex> lock(instances_mutex);
+    auto it = instances.find(handle);
+    if (it != instances.end() && it->second->terminal) {
+        return it->second->terminal->getScreen().cursorCol();
+    }
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_tx_terminal_jni_NativeTerminal_getCursorRow(
+    JNIEnv* env,
+    jclass clazz,
+    jlong handle
+) {
+    std::lock_guard<std::mutex> lock(instances_mutex);
+    auto it = instances.find(handle);
+    if (it != instances.end() && it->second->terminal) {
+        return it->second->terminal->getScreen().cursorRow();
+    }
+    return 0;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_tx_terminal_jni_NativeTerminal_isRunning(
     JNIEnv* env,
