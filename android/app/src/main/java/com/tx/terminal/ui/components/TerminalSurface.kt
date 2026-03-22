@@ -143,7 +143,11 @@ class TerminalSurfaceView(context: Context) : View(context) {
             post {
                 requestFocus()
                 requestFocusFromTouch()
-                showKeyboard()
+                postDelayed({
+                    if (!longPressTriggered && !isSelecting) {
+                        showKeyboard()
+                    }
+                }, 120)
             }
         }
     }
@@ -413,10 +417,13 @@ class TerminalSurfaceView(context: Context) : View(context) {
                         updateSelection(selectionStartX, selectionStartY)
                     }
                 }, 500)
-
+                postDelayed({
+                    if (!longPressTriggered && !isSelecting) {
+                        showKeyboard()
+                    }
+                }, 120)
                 requestFocus()
                 requestFocusFromTouch()
-                showKeyboard()
             }
 
             MotionEvent.ACTION_MOVE -> {
