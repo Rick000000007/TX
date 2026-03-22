@@ -200,7 +200,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val fm = paint.fontMetrics
         textAscent = fm.ascent
         baselineOffset = -fm.ascent
-        cellWidth = paint.measureText("W").coerceAtLeast(1f)
+        val sample = "MMMMMMMMMM"
+        cellWidth = (paint.measureText(sample) / sample.length).coerceAtLeast(1f)
         cellHeight = (fm.descent - fm.ascent).coerceAtLeast(1f)
     }
 
