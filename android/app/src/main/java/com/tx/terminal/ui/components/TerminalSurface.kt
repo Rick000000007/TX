@@ -30,7 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Terminal rendering surface using Android SurfaceView with OpenGL ES rendering
+ * Terminal rendering surface using AndroidView with a custom canvas-based terminal view
  * 
  * Features:
  * - Hardware-accelerated rendering via native code
@@ -76,11 +76,11 @@ fun TerminalSurface(
 }
 
 /**
- * Custom SurfaceView for terminal rendering
+ * Custom View for terminal rendering
  * 
  * Architecture:
- * - SurfaceView provides the rendering surface
- * - Native code handles OpenGL ES rendering
+ * - Custom View provides the rendering surface
+ * - Canvas rendering displays terminal screen content
  * - InputConnection provides robust soft keyboard integration
  */
 class TerminalSurfaceView(context: Context) : View(context) {

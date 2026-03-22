@@ -215,7 +215,6 @@ fun MainScreen(viewModel: TerminalViewModel) {
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxSize()
-                        .background(Color.Magenta)
                 ) {
                     TerminalSurface(
                         viewModel = viewModel,
