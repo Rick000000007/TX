@@ -109,6 +109,11 @@ class TerminalSurfaceView(context: Context) : View(context) {
         style = Paint.Style.FILL
     }
 
+    private val selectionHandlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.FILL
+    }
+
     private var renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     @Volatile
@@ -132,6 +137,19 @@ class TerminalSurfaceView(context: Context) : View(context) {
     private var isSelecting = false
     private var longPressTriggered = false
     private var hasPersistentSelection = false
+
+    private enum class SelectionHandle {
+        NONE,
+        START,
+        END
+    }
+
+    private var selectionStartCol = 0
+    private var selectionStartRow = 0
+    private var selectionEndCol = 0
+    private var selectionEndRow = 0
+    private var activeHandle = SelectionHandle.NONE
+    private var longPressRunnable: Runnable? = null
 
     private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     private val clipboard =
@@ -355,6 +373,18 @@ class TerminalSurfaceView(context: Context) : View(context) {
             } catch (_: Exception) {
             }
         }
+
+        if (hasPersistentSelection) {
+            val handleRadius = (cellHeight * 0.22f).coerceAtLeast(10f)
+
+            val startCx = horizontalPadding + (selectionStartCol * cellWidth)
+            val startCy = verticalPadding + (selectionStartRow * cellHeight) + cellHeight
+            canvas.drawCircle(startCx, startCy, handleRadius, selectionHandlePaint)
+
+            val endCx = horizontalPadding + ((selectionEndCol + 1) * cellWidth)
+            val endCy = verticalPadding + (selectionEndRow * cellHeight) + cellHeight
+            canvas.drawCircle(endCx, endCy, handleRadius, selectionHandlePaint)
+        }
     }
 
     override fun onCheckIsTextEditor(): Boolean = true
@@ -474,71 +504,91 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
+        when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                parent?.requestDisallowInterceptTouchEvent(true)
+                requestFocus()
+                requestFocusFromTouch()
+
+                val tappedHandle = hitTestHandle(event.x, event.y)
+                if (tappedHandle != SelectionHandle.NONE) {
+                    activeHandle = tappedHandle
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                    invalidate()
+                    return true
+                }
+
                 selectionStartX = event.x
                 selectionStartY = event.y
                 isSelecting = false
                 longPressTriggered = false
+                activeHandle = SelectionHandle.NONE
 
-                requestFocus()
-                requestFocusFromTouch()
-
-                postDelayed({
-                    if (!longPressTriggered && !isSelecting) {
+                longPressRunnable?.let { removeCallbacks(it) }
+                longPressRunnable = Runnable {
+                    if (!longPressTriggered && !isSelecting && activeHandle == SelectionHandle.NONE) {
                         longPressTriggered = true
                         vibrate()
-                        startSelection()
-                        updateSelection(selectionStartX, selectionStartY)
+                        val (col, row) = screenToCell(selectionStartX, selectionStartY)
+                        selectionStartCol = col
+                        selectionStartRow = row
+                        selectionEndCol = col
+                        selectionEndRow = row
+                        hasPersistentSelection = true
+                        updateNativeSelection()
+                        isSelecting = true
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                        invalidate()
                     }
-                }, 500)
+                }
+                postDelayed(longPressRunnable, 500)
+
+                return true
             }
 
             MotionEvent.ACTION_MOVE -> {
+                if (activeHandle != SelectionHandle.NONE) {
+                    longPressRunnable?.let { removeCallbacks(it) }
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                    applyHandleDrag(event.x, event.y)
+                    return true
+                }
+
+                val dx = kotlin.math.abs(event.x - selectionStartX)
+                val dy = kotlin.math.abs(event.y - selectionStartY)
+                if (!longPressTriggered && (dx > 16f || dy > 16f)) {
+                    longPressRunnable?.let { removeCallbacks(it) }
+                }
+
                 if (longPressTriggered || isSelecting) {
                     parent?.requestDisallowInterceptTouchEvent(true)
                     isSelecting = true
                     updateSelection(event.x, event.y)
+                    return true
                 }
+
+                return true
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                longPressRunnable?.let { removeCallbacks(it) }
                 parent?.requestDisallowInterceptTouchEvent(false)
-                if (isSelecting || longPressTriggered) {
-                    val selectedText = currentSession?.copySelection().orEmpty()
 
-                    if (selectedText.isNotEmpty()) {
-                        clipboard.setPrimaryClip(
-                            android.content.ClipData.newPlainText(
-                                "Terminal Selection",
-                                selectedText
-                            )
-                        )
-                        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-                    }
-
-                    if (!hasPersistentSelection) {
-                        currentSession?.let { session ->
-                            try {
-                                NativeTerminal.clearSelection(session.getNativeHandle())
-                            } catch (_: Exception) {
-                            }
-                        }
-                    }
-
+                if (isSelecting || longPressTriggered || activeHandle != SelectionHandle.NONE) {
                     isSelecting = false
+                    activeHandle = SelectionHandle.NONE
                     longPressTriggered = false
-                    requestRender()
-                } else {
-                    performClick()
-                    post {
-                        showKeyboard()
-                    }
+                    invalidate()
+                    return true
                 }
+
+                performClick()
+                post {
+                    showKeyboard()
+                }
+                return true
             }
         }
-        return true
+        return super.onTouchEvent(event)
     }
 
     private fun startSelection() {
@@ -547,31 +597,112 @@ class TerminalSurfaceView(context: Context) : View(context) {
         Toast.makeText(context, "Selection mode - drag to select", Toast.LENGTH_SHORT).show()
     }
 
-    private fun updateSelection(x: Float, y: Float) {
+    private fun screenToCell(x: Float, y: Float): Pair<Int, Int> {
         val colBias = cellWidth * 0.5f
-
-        val startCol = (((selectionStartX - horizontalPadding + colBias) / cellWidth).toInt())
+        val col = (((x - horizontalPadding + colBias) / cellWidth).toInt())
             .coerceIn(0, terminalColumns - 1)
-        val startRow = (((selectionStartY - verticalPadding) / cellHeight).toInt())
+        val row = (((y - verticalPadding) / cellHeight).toInt())
             .coerceIn(0, terminalRows - 1)
-        val endCol = (((x - horizontalPadding + colBias) / cellWidth).toInt())
-            .coerceIn(0, terminalColumns - 1)
-        val endRow = (((y - verticalPadding) / cellHeight).toInt())
-            .coerceIn(0, terminalRows - 1)
+        return col to row
+    }
 
+    private fun normalizeSelection() {
+        if (selectionStartRow > selectionEndRow ||
+            (selectionStartRow == selectionEndRow && selectionStartCol > selectionEndCol)
+        ) {
+            val sc = selectionStartCol
+            val sr = selectionStartRow
+            selectionStartCol = selectionEndCol
+            selectionStartRow = selectionEndRow
+            selectionEndCol = sc
+            selectionEndRow = sr
+
+            activeHandle = when (activeHandle) {
+                SelectionHandle.START -> SelectionHandle.END
+                SelectionHandle.END -> SelectionHandle.START
+                SelectionHandle.NONE -> SelectionHandle.NONE
+            }
+        }
+    }
+
+    private fun hitTestHandle(x: Float, y: Float): SelectionHandle {
+        if (!hasPersistentSelection) return SelectionHandle.NONE
+
+        val handleRadius = (cellHeight * 0.22f).coerceAtLeast(10f)
+        fun near(px: Float, py: Float): Boolean {
+            val dx = x - px
+            val dy = y - py
+            return dx * dx + dy * dy <= handleRadius * handleRadius * 4f
+        }
+
+        val startCx = horizontalPadding + (selectionStartCol * cellWidth)
+        val startCy = verticalPadding + (selectionStartRow * cellHeight) + cellHeight
+        val endCx = horizontalPadding + ((selectionEndCol + 1) * cellWidth)
+        val endCy = verticalPadding + (selectionEndRow * cellHeight) + cellHeight
+
+        return when {
+            near(startCx, startCy) -> SelectionHandle.START
+            near(endCx, endCy) -> SelectionHandle.END
+            else -> SelectionHandle.NONE
+        }
+    }
+
+    private fun applyHandleDrag(x: Float, y: Float) {
+        val (col, row) = screenToCell(x, y)
+        when (activeHandle) {
+            SelectionHandle.START -> {
+                selectionStartCol = col
+                selectionStartRow = row
+            }
+            SelectionHandle.END -> {
+                selectionEndCol = col
+                selectionEndRow = row
+            }
+            SelectionHandle.NONE -> return
+        }
+        normalizeSelection()
+        updateNativeSelection()
+        invalidate()
+    }
+
+    private fun updateNativeSelection() {
         currentSession?.let { session ->
             try {
                 NativeTerminal.setSelection(
                     session.getNativeHandle(),
-                    startCol,
-                    startRow,
-                    endCol,
-                    endRow
+                    selectionStartCol,
+                    selectionStartRow,
+                    selectionEndCol,
+                    selectionEndRow
                 )
+                hasPersistentSelection = true
                 requestRender()
             } catch (_: Exception) {
             }
         }
+    }
+
+    private fun clearPersistentSelection() {
+        currentSession?.let { session ->
+            try {
+                NativeTerminal.clearSelection(session.getNativeHandle())
+            } catch (_: Exception) {
+            }
+        }
+        hasPersistentSelection = false
+        activeHandle = SelectionHandle.NONE
+    }
+
+    private fun updateSelection(x: Float, y: Float) {
+        val (startCol, startRow) = screenToCell(selectionStartX, selectionStartY)
+        val (endCol, endRow) = screenToCell(x, y)
+
+        selectionStartCol = startCol
+        selectionStartRow = startRow
+        selectionEndCol = endCol
+        selectionEndRow = endRow
+        normalizeSelection()
+        updateNativeSelection()
     }
 
     private fun showKeyboard() {
