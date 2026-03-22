@@ -178,6 +178,8 @@ class TerminalSession(
     }
     
     fun hasNativeHandle(): Boolean = nativeHandle != 0L
+    fun getNativeHandle(): Long = nativeHandle
+
 
     /**
      * Attach rendering surface
