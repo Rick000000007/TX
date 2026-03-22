@@ -281,8 +281,13 @@ class TerminalSurfaceView(context: Context) : View(context) {
     override fun onCheckIsTextEditor(): Boolean = true
 
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection {
-        outAttrs.inputType = EditorInfo.TYPE_CLASS_TEXT
-        outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_EXTRACT_UI
+        outAttrs.inputType =
+            EditorInfo.TYPE_CLASS_TEXT or
+            EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS or
+            EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        outAttrs.imeOptions =
+            EditorInfo.IME_FLAG_NO_EXTRACT_UI or
+            EditorInfo.IME_ACTION_NONE
         return object : BaseInputConnection(this, true) {
             override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
                 if (!text.isNullOrEmpty()) {
@@ -455,10 +460,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private fun updateSelection(x: Float, y: Float) {
-        val startCol = ((selectionStartX - horizontalPadding) / cellWidth).toInt().coerceAtLeast(0)
-        val startRow = ((selectionStartY - verticalPadding) / cellHeight).toInt().coerceAtLeast(0)
-        val endCol = ((x - horizontalPadding) / cellWidth).toInt().coerceAtLeast(0)
-        val endRow = ((y - verticalPadding) / cellHeight).toInt().coerceAtLeast(0)
+        val startCol = (((selectionStartX - horizontalPadding) / cellWidth).toInt()).coerceIn(0, terminalColumns - 1)
+        val startRow = (((selectionStartY - verticalPadding) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
+        val endCol = (((x - horizontalPadding) / cellWidth).toInt()).coerceIn(0, terminalColumns - 1)
+        val endRow = (((y - verticalPadding) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
 
         currentSession?.let { session ->
             try {
@@ -476,7 +481,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private fun showKeyboard() {
+        requestFocus()
+        requestFocusFromTouch()
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.restartInput(this)
         imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
     }
 
