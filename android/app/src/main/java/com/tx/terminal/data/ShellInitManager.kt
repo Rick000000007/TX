@@ -9,10 +9,10 @@ import java.io.File
  * Creates default .profile and .bashrc equivalents for Android's shell
  */
 class ShellInitManager(private val context: Context) {
-    
+
     companion object {
         private const val TAG = "ShellInitManager"
-        
+
         // Default shell profile content for Android's /system/bin/sh
         private const val DEFAULT_PROFILE = """# TX Terminal Profile
 # This file is sourced by the shell on startup
@@ -111,33 +111,33 @@ set completion-ignore-case on
 "\e[B": history-search-forward
 """
     }
-    
+
     /**
      * Initialize shell configuration files in the home directory
      */
     fun initializeShellConfig(homeDir: File) {
         Log.d(TAG, "Initializing shell config in: ${homeDir.absolutePath}")
-        
+
         // Create .profile
         createInitFile(homeDir, ".profile", DEFAULT_PROFILE)
-        
+
         // Create .bashrc (for compatibility)
         createInitFile(homeDir, ".bashrc", DEFAULT_BASHRC)
-        
+
         // Create .inputrc for readline configuration
         createInitFile(homeDir, ".inputrc", DEFAULT_INPUTRC)
-        
+
         // Create a help file
         createHelpFile(homeDir)
     }
-    
+
     /**
      * Check if shell config files exist
      */
     fun hasShellConfig(homeDir: File): Boolean {
         return File(homeDir, ".profile").exists()
     }
-    
+
     /**
      * Create a single init file if it doesn't exist
      */
@@ -152,7 +152,7 @@ set completion-ignore-case on
             }
         }
     }
-    
+
     /**
      * Create a help file with available commands
      */
@@ -197,12 +197,12 @@ set completion-ignore-case on
 - q            - Exit shell
 
 ## Environment Variables
-- \$HOME        - Home directory
-- \$PWD         - Current directory
-- \$PATH        - Executable search path
-- \$SHELL       - Current shell
-- \$TERM        - Terminal type
-- \$TMPDIR      - Temporary directory
+- ${'$'}HOME        - Home directory
+- ${'$'}PWD         - Current directory
+- ${'$'}PATH        - Executable search path
+- ${'$'}SHELL       - Current shell
+- ${'$'}TERM        - Terminal type
+- ${'$'}TMPDIR      - Temporary directory
 
 ## Custom Functions
 - help()       - Show this help
@@ -218,7 +218,7 @@ set completion-ignore-case on
 """
         createInitFile(homeDir, "HELP.txt", helpContent)
     }
-    
+
     /**
      * Get the path to the profile file for sourcing
      */
