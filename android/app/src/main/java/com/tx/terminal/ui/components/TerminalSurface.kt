@@ -98,10 +98,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
         style = Paint.Style.FILL
     }
 
-    private val cursorPaint = Paint().apply {
+    private val cursorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.WHITE
         style = Paint.Style.STROKE
-        strokeWidth = 2f
+        strokeWidth = 3f
     }
 
     private var renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -325,9 +325,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 if (cursorCol in 0 until terminalColumns && cursorRow in 0 until terminalRows) {
                     val left = horizontalPadding + (cursorCol * cellWidth)
                     val top = verticalPadding + (cursorRow * cellHeight)
-                    val right = left + cellWidth
                     val bottom = top + cellHeight
-                    canvas.drawRect(left, top, right, bottom, cursorPaint)
+                    canvas.drawLine(left, top, left, bottom, cursorPaint)
                 }
             } catch (_: Exception) {
             }
