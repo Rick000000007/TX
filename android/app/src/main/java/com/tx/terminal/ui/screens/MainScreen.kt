@@ -217,9 +217,9 @@ fun MainScreen(viewModel: TerminalViewModel) {
                         .fillMaxSize()
                         .background(Color.Magenta)
                 ) {
-                    Text(
-                        text = "MAINSCREEN DEBUG",
-                        color = Color.White
+                    TerminalSurface(
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
                 

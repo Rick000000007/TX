@@ -57,12 +57,12 @@ fun TerminalSurface(
         modifier = modifier
             .background(Color.Yellow)
     ) {
-        androidx.compose.material3.Text(
-        text = "TX COMPOSE DEBUG",
-        color = Color.Black
-    )
+        Text(
+            text = "TERMINALSURFACE DEBUG",
+            color = Color.Black
+        )
 
-    AndroidView(
+        AndroidView(
             factory = { ctx ->
                 TerminalSurfaceView(ctx).apply {
                     this.viewModel = viewModel
@@ -77,7 +77,7 @@ fun TerminalSurface(
                 view.updateFontSize(fontSize)
                 view.setSession(activeSession)
             },
-		modifier = Modifier.fillMaxSize().background(Color.Red)
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
