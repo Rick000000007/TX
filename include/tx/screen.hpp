@@ -163,6 +163,7 @@ public:
     void setSelection(int start_col, int start_row, int end_col, int end_row);
     void clearSelection() { selection_.clear(); }
     const Selection& getSelection() const { return selection_; }
+    bool isCellSelected(int col, int row) const { return selection_.contains(col, row); }
     std::string getSelectedText() const;
     
     // Damage tracking (for efficient rendering)

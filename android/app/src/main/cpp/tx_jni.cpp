@@ -614,6 +614,22 @@ Java_com_tx_terminal_jni_NativeTerminal_clearSelection(
     }
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_tx_terminal_jni_NativeTerminal_isCellSelected(
+    JNIEnv* env,
+    jclass clazz,
+    jlong handle,
+    jint col,
+    jint row
+) {
+    std::lock_guard<std::mutex> lock(instances_mutex);
+    auto it = instances.find(handle);
+    if (it != instances.end() && it->second->terminal) {
+        return it->second->terminal->getScreen().isCellSelected(col, row) ? JNI_TRUE : JNI_FALSE;
+    }
+    return JNI_FALSE;
+}
+
 JNIEXPORT jstring JNICALL
 Java_com_tx_terminal_jni_NativeTerminal_getVersion(
     JNIEnv* env,

@@ -93,6 +93,11 @@ class TerminalSurfaceView(context: Context) : View(context) {
         textSize = fontSizeSp
     }
 
+    private val selectionPaint = Paint().apply {
+        color = android.graphics.Color.argb(120, 80, 140, 255)
+        style = Paint.Style.FILL
+    }
+
     private var renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     @Volatile
@@ -270,20 +275,40 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         canvas.drawColor(backgroundColorInt)
 
-        val text = currentSession?.getScreenContent().orEmpty()
+        val session = currentSession
+        val text = session?.getScreenContent().orEmpty()
         val lines = if (text.isEmpty()) emptyList() else text.split("\n")
 
-        var y = verticalPadding + baselineOffset
+        var baselineY = verticalPadding + baselineOffset
 
-        for (line in lines.take(terminalRows)) {
+        for (row in 0 until terminalRows) {
+            if (baselineY > height - verticalPadding) break
+
+            val line = if (row < lines.size) lines[row] else ""
             val visibleLine = if (line.length > terminalColumns) {
                 line.take(terminalColumns)
             } else {
                 line
             }
-            canvas.drawText(visibleLine, horizontalPadding, y, paint)
-            y += cellHeight
-            if (y > height - verticalPadding) break
+
+            if (session != null) {
+                val top = baselineY - baselineOffset
+                val bottom = top + cellHeight
+
+                for (col in 0 until terminalColumns) {
+                    try {
+                        if (NativeTerminal.isCellSelected(session.getNativeHandle(), col, row)) {
+                            val left = horizontalPadding + (col * cellWidth)
+                            val right = left + cellWidth
+                            canvas.drawRect(left, top, right, bottom, selectionPaint)
+                        }
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+
+            canvas.drawText(visibleLine, horizontalPadding, baselineY, paint)
+            baselineY += cellHeight
         }
     }
 

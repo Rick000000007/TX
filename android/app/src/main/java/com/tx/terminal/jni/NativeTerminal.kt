@@ -177,6 +177,12 @@ object NativeTerminal {
      */
     @JvmStatic
     external fun clearSelection(handle: Long)
+
+    /**
+     * Check whether a cell is selected
+     */
+    @JvmStatic
+    external fun isCellSelected(handle: Long, col: Int, row: Int): Boolean
     
     /**
      * Get version string
