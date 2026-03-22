@@ -158,8 +158,14 @@ class TerminalSurfaceView(context: Context) : View(context) {
         }
 
         requestFocus()
+        requestFocusFromTouch()
         applyTerminalSize()
         requestRender()
+        post {
+            requestFocus()
+            requestFocusFromTouch()
+            showKeyboard()
+        }
     }
 
     fun updateColors(bg: Int, fg: Int) {
@@ -405,6 +411,9 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 isSelecting = false
                 longPressTriggered = false
 
+                requestFocus()
+                requestFocusFromTouch()
+
                 postDelayed({
                     if (!longPressTriggered && !isSelecting) {
                         longPressTriggered = true
@@ -413,10 +422,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
                         updateSelection(selectionStartX, selectionStartY)
                     }
                 }, 500)
-
-                requestFocus()
-                requestFocusFromTouch()
-                showKeyboard()
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -451,7 +456,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     longPressTriggered = false
                     requestRender()
                 } else {
-                    showKeyboard()
+                    performClick()
+                    post {
+                        showKeyboard()
+                    }
                 }
             }
         }
@@ -464,10 +472,17 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private fun updateSelection(x: Float, y: Float) {
-        val startCol = (((selectionStartX - horizontalPadding) / cellWidth).toInt()).coerceIn(0, terminalColumns - 1)
-        val startRow = (((selectionStartY - verticalPadding - baselineOffset) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
-        val endCol = (((x - horizontalPadding) / cellWidth).toInt()).coerceIn(0, terminalColumns - 1)
-        val endRow = (((y - verticalPadding - baselineOffset) / cellHeight).toInt()).coerceIn(0, terminalRows - 1)
+        val colBias = cellWidth * 0.5f
+        val rowBias = cellHeight * 0.5f
+
+        val startCol = (((selectionStartX - horizontalPadding + colBias) / cellWidth).toInt())
+            .coerceIn(0, terminalColumns - 1)
+        val startRow = (((selectionStartY - verticalPadding - baselineOffset + rowBias) / cellHeight).toInt())
+            .coerceIn(0, terminalRows - 1)
+        val endCol = (((x - horizontalPadding + colBias) / cellWidth).toInt())
+            .coerceIn(0, terminalColumns - 1)
+        val endRow = (((y - verticalPadding - baselineOffset + rowBias) / cellHeight).toInt())
+            .coerceIn(0, terminalRows - 1)
 
         currentSession?.let { session ->
             try {
