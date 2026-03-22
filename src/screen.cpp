@@ -547,62 +547,91 @@ void Screen::setSelection(int start_col, int start_row, int end_col, int end_row
 
 std::string Screen::getSelectedText() const {
     if (!selection_.active) return "";
-    
+
+    auto clamp_col = [this](int c) {
+        return std::max(0, std::min(c, cols_ - 1));
+    };
+    auto clamp_row = [this](int r) {
+        return std::max(0, std::min(r, rows_ - 1));
+    };
+    auto append_utf8 = [](std::string& out, char32_t cp) {
+        if (cp < 0x80) {
+            out += static_cast<char>(cp);
+        } else if (cp < 0x800) {
+            out += static_cast<char>(0xC0 | (cp >> 6));
+            out += static_cast<char>(0x80 | (cp & 0x3F));
+        } else if (cp < 0x10000) {
+            out += static_cast<char>(0xE0 | (cp >> 12));
+            out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (cp & 0x3F));
+        } else {
+            out += static_cast<char>(0xF0 | (cp >> 18));
+            out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+            out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (cp & 0x3F));
+        }
+    };
+
+    int raw_start_col = clamp_col(selection_.start_col);
+    int raw_start_row = clamp_row(selection_.start_row);
+    int raw_end_col = clamp_col(selection_.end_col);
+    int raw_end_row = clamp_row(selection_.end_row);
+
+    bool forward =
+        (raw_start_row < raw_end_row) ||
+        (raw_start_row == raw_end_row && raw_start_col <= raw_end_col);
+
+    int norm_start_row = forward ? raw_start_row : raw_end_row;
+    int norm_start_col = forward ? raw_start_col : raw_end_col;
+    int norm_end_row = forward ? raw_end_row : raw_start_row;
+    int norm_end_col = forward ? raw_end_col : raw_start_col;
+
     std::string result;
-    int start_r = std::min(selection_.start_row, selection_.end_row);
-    int end_r = std::max(selection_.start_row, selection_.end_row);
-    
-    for (int row = start_r; row <= end_r; ++row) {
+
+    for (int row = norm_start_row; row <= norm_end_row; ++row) {
         const Cell* line = getRow(row);
         if (!line) continue;
-        
-        int start_c, end_c;
+
+        int start_c = 0;
+        int end_c = cols_ - 1;
+
         if (selection_.rectangular) {
-            start_c = std::min(selection_.start_col, selection_.end_col);
-            end_c = std::max(selection_.start_col, selection_.end_col);
+            start_c = std::min(raw_start_col, raw_end_col);
+            end_c = std::max(raw_start_col, raw_end_col);
         } else {
-            if (row == start_r) {
-                start_c = (selection_.start_row < selection_.end_row) ? selection_.start_col : selection_.end_col;
-            } else {
-                start_c = 0;
-            }
-            if (row == end_r) {
-                end_c = (selection_.start_row < selection_.end_row) ? selection_.end_col : selection_.start_col;
-            } else {
-                end_c = cols_ - 1;
-            }
+            if (row == norm_start_row) start_c = norm_start_col;
+            if (row == norm_end_row) end_c = norm_end_col;
         }
-        
+
+        start_c = clamp_col(start_c);
+        end_c = clamp_col(end_c);
+
+        std::string line_text;
+        line_text.reserve(end_c - start_c + 1);
+
         for (int col = start_c; col <= end_c; ++col) {
-            if (!line[col].empty() && !line[col].attrs.wide_continuation) {
-                // Convert codepoint to UTF-8
-                char32_t cp = line[col].codepoint;
-                if (cp < 0x80) {
-                    result += static_cast<char>(cp);
-                } else if (cp < 0x800) {
-                    result += static_cast<char>(0xC0 | (cp >> 6));
-                    result += static_cast<char>(0x80 | (cp & 0x3F));
-                } else if (cp < 0x10000) {
-                    result += static_cast<char>(0xE0 | (cp >> 12));
-                    result += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-                    result += static_cast<char>(0x80 | (cp & 0x3F));
-                } else {
-                    result += static_cast<char>(0xF0 | (cp >> 18));
-                    result += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
-                    result += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-                    result += static_cast<char>(0x80 | (cp & 0x3F));
-                }
+            if (line[col].attrs.wide_continuation) {
+                continue;
+            }
+            if (line[col].empty()) {
+                line_text += ' ';
+            } else {
+                append_utf8(line_text, line[col].codepoint);
             }
         }
-        
-        if (row < end_r) {
+
+        while (!line_text.empty() && line_text.back() == ' ') {
+            line_text.pop_back();
+        }
+
+        result += line_text;
+        if (row < norm_end_row) {
             result += '\n';
         }
     }
-    
+
     return result;
 }
-
 void Screen::pushToHistory(const std::vector<Cell>& line, bool wrapped) {
     if (history_.size() >= MAX_HISTORY) {
         history_.pop_front();
