@@ -5,9 +5,8 @@ import android.graphics.Paint
 import android.graphics.Canvas
 import android.graphics.Typeface
 import android.view.KeyEvent
-import android.view.SurfaceHolder
-import android.view.SurfaceView
 import android.view.MotionEvent
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
@@ -15,7 +14,6 @@ import android.view.inputmethod.InputConnection
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,11 +53,24 @@ fun TerminalSurface(
 
     Box(
         modifier = modifier
-            .background(Color.Yellow)
+            .background(Color(backgroundColor))
     ) {
-        Text(
-            text = "TERMINALSURFACE ONLY COMPOSE",
-            color = Color.Black
+        AndroidView(
+            factory = { ctx ->
+                TerminalSurfaceView(ctx).apply {
+                    this.viewModel = viewModel
+                    updateColors(backgroundColor, foregroundColor)
+                    updateFontSize(fontSize)
+                    setSession(activeSession)
+                }
+            },
+            update = { view ->
+                view.viewModel = viewModel
+                view.updateColors(backgroundColor, foregroundColor)
+                view.updateFontSize(fontSize)
+                view.setSession(activeSession)
+            },
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
@@ -72,7 +83,7 @@ fun TerminalSurface(
  * - Native code handles OpenGL ES rendering
  * - InputConnection provides robust soft keyboard integration
  */
-class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolder.Callback {
+class TerminalSurfaceView(context: Context) : View(context) {
 
     var viewModel: TerminalViewModel? = null
     private var currentSession: TerminalSession? = null
@@ -99,7 +110,6 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
     private var blinkScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     init {
-        holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true
         isClickable = true
@@ -124,16 +134,12 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
         if (currentSession?.id == session?.id) return
 
         currentSession?.onScreenUpdate = null
-        currentSession?.detachSurface()
         currentSession = session
 
         currentSession?.onScreenUpdate = {
             requestRender()
         }
 
-        if (holder.surface.isValid) {
-            currentSession?.attachSurface(holder.surface)
-        }
         requestFocus()
         requestRender()
     }
@@ -150,38 +156,6 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
         fontSizeSp = size
         paint.textSize = size
         requestRender()
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder) {
-        currentSession?.attachSurface(holder.surface)
-        isRendering = true
-        requestRender()
-        startRenderLoop()
-        startCursorBlink()
-        post {
-            requestFocus()
-            requestFocusFromTouch()
-        }
-    }
-
-    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        val charWidth = paint.measureText("M").coerceAtLeast(1f)
-        val charHeight = (paint.fontMetrics.descent - paint.fontMetrics.ascent).coerceAtLeast(1f)
-
-        val columns = (width / charWidth).toInt().coerceAtLeast(1)
-        val rows = (height / charHeight).toInt().coerceAtLeast(1)
-
-        currentSession?.resize(columns, rows)
-        requestRender()
-    }
-
-    override fun surfaceDestroyed(holder: SurfaceHolder) {
-        isRendering = false
-        currentSession?.detachSurface()
-        renderScope.cancel()
-        renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-        blinkScope.cancel()
-        blinkScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     private fun startRenderLoop() {
@@ -211,28 +185,24 @@ class TerminalSurfaceView(context: Context) : SurfaceView(context), SurfaceHolde
     }
 
     private fun render() {
+        postInvalidate()
+    }
 
-        val surface = holder.surface ?: return
-        if (!surface.isValid) return
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
 
-        try {
-            val canvas: Canvas = holder.lockCanvas() ?: return
-            canvas.drawColor(backgroundColorInt)
+        canvas.drawColor(backgroundColorInt)
 
-            val text = currentSession?.getScreenContent().orEmpty()
-            val lines = if (text.isEmpty()) listOf("[TX DEBUG] screen empty") else text.split("\n")
+        val text = currentSession?.getScreenContent().orEmpty()
+        val lines = if (text.isEmpty()) listOf("[TX DEBUG] screen empty") else text.split("\n")
 
-            val lineHeight = (paint.fontMetrics.descent - paint.fontMetrics.ascent).coerceAtLeast(1f)
-            var y = -paint.fontMetrics.ascent
+        val lineHeight = (paint.fontMetrics.descent - paint.fontMetrics.ascent).coerceAtLeast(1f)
+        var y = -paint.fontMetrics.ascent
 
-            for (line in lines.take(200)) {
-                canvas.drawText(line, 8f, y, paint)
-                y += lineHeight
-                if (y > height - 8f) break
-            }
-
-            holder.unlockCanvasAndPost(canvas)
-        } catch (_: Exception) {
+        for (line in lines.take(200)) {
+            canvas.drawText(line, 8f, y, paint)
+            y += lineHeight
+            if (y > height - 8f) break
         }
     }
 
