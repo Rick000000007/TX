@@ -13,6 +13,7 @@ struct TerminalConfig {
     int cols = 80;
     int rows = 24;
     std::string shell = "/bin/bash";
+    std::string cwd;  // Working directory for shell startup (Phase 1: app-private HOME)
     std::vector<std::string> env;
     RenderConfig render;
 };

@@ -28,6 +28,8 @@ object NativeTerminal {
      * @param rows Number of rows
      * @param shellPath Path to shell executable
      * @param initialCommand Optional initial command to execute
+     * @param workingDirectory Working directory for shell startup
+     * @param envVars Array of environment variables in "KEY=value" format
      * @return Native handle (0 on failure)
      */
     @JvmStatic
@@ -35,7 +37,9 @@ object NativeTerminal {
         columns: Int,
         rows: Int,
         shellPath: String,
-        initialCommand: String?
+        initialCommand: String?,
+        workingDirectory: String,
+        envVars: Array<String>
     ): Long
     
     /**
@@ -191,5 +195,39 @@ object NativeTerminal {
         } catch (e: Exception) {
             false
         }
+    }
+    
+    /**
+     * Helper method to create a terminal with environment config
+     * @param columns Number of columns
+     * @param rows Number of rows
+     * @param shellPath Path to shell executable
+     * @param initialCommand Optional initial command
+     * @param workingDirectory Working directory
+     * @param environmentVariables Map of environment variables
+     * @return Native handle (0 on failure)
+     */
+    fun createWithEnvironment(
+        columns: Int,
+        rows: Int,
+        shellPath: String,
+        initialCommand: String?,
+        workingDirectory: String,
+        environmentVariables: Map<String, String>
+    ): Long {
+        // Convert environment map to array format
+        val envArray = environmentVariables.map { "${it.key}=${it.value}" }.toTypedArray()
+        
+        Log.d(TAG, "Creating terminal with working directory: $workingDirectory")
+        Log.d(TAG, "Environment variables count: ${envArray.size}")
+        
+        return create(
+            columns,
+            rows,
+            shellPath,
+            initialCommand,
+            workingDirectory,
+            envArray
+        )
     }
 }

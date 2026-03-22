@@ -32,7 +32,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
     val activeSessionId by viewModel.activeSessionId.collectAsState()
     val showExtraKeys by viewModel.showExtraKeys.collectAsState()
     val activeSession = viewModel.activeSession
-    
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -228,8 +228,12 @@ fun MainScreen(viewModel: TerminalViewModel) {
                         onKeyPressed = { key, modifiers ->
                             viewModel.sendKey(key, modifiers, true)
                         },
+                        onSendText = { text ->
+                            viewModel.sendText(text)
+                        },
                         onCtrlC = { viewModel.sendInterrupt() },
                         onCtrlD = { viewModel.sendEOF() },
+                        onCtrlZ = { viewModel.sendText("\u001a") }, // SUB (Ctrl+Z)
                         onCopy = { viewModel.copyToClipboard() },
                         onPaste = { viewModel.pasteFromClipboard() }
                     )

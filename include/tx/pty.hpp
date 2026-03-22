@@ -41,8 +41,12 @@ public:
     PTY& operator=(PTY&& other) noexcept;
     
     // Open PTY and spawn shell
+    // @param shell Path to shell executable
+    // @param env Environment variables as "KEY=value" strings
+    // @param cwd Working directory for the shell process (empty = inherit)
     PTYResult open(const std::string& shell = "/system/bin/sh",
-                   const std::vector<std::string>& env = {});
+                   const std::vector<std::string>& env = {},
+                   const std::string& cwd = "");
     
     // Close PTY and terminate child
     void close();
@@ -93,7 +97,9 @@ private:
     // Platform-specific helpers
     bool setupMasterPTY();
     bool configureTerminal();
-    pid_t spawnChild(const std::string& shell, const std::vector<std::string>& env);
+    pid_t spawnChild(const std::string& shell, 
+                     const std::vector<std::string>& env,
+                     const std::string& cwd);
     
     // Android-specific
     #if defined(TX_ANDROID)

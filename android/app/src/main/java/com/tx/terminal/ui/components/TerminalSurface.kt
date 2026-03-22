@@ -1,9 +1,14 @@
 package com.tx.terminal.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Canvas
 import android.graphics.Typeface
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -11,6 +16,7 @@ import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +41,7 @@ import kotlinx.coroutines.launch
  * Features:
  * - Hardware-accelerated rendering via native code
  * - Robust soft keyboard input handling
+ * - Improved special key handling (Ctrl, Alt, Esc, Tab, arrows, Enter, Backspace)
  * - Touch-to-focus for keyboard
  * - Cursor visibility and blinking
  */
@@ -82,6 +89,7 @@ fun TerminalSurface(
  * - Custom View provides the rendering surface
  * - Canvas rendering displays terminal screen content
  * - InputConnection provides robust soft keyboard integration
+ * - Improved key handling for special keys and modifiers
  */
 class TerminalSurfaceView(context: Context) : View(context) {
 
@@ -108,6 +116,22 @@ class TerminalSurfaceView(context: Context) : View(context) {
     @Volatile
     private var cursorVisible = true
     private var blinkScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    
+    // Modifier key states for proper handling
+    private var ctrlPressed = false
+    private var altPressed = false
+    private var shiftPressed = false
+    private var metaPressed = false
+    
+    // Selection state (Phase 2: stronger selection/copy/paste)
+    private var selectionStartX = 0f
+    private var selectionStartY = 0f
+    private var isSelecting = false
+    private var longPressTriggered = false
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    
+    // Clipboard manager
+    private val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
     init {
         isFocusable = true
@@ -210,17 +234,104 @@ class TerminalSurfaceView(context: Context) : View(context) {
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                selectionStartX = event.x
+                selectionStartY = event.y
+                isSelecting = false
+                longPressTriggered = false
+                
+                // Start long press detection for selection
+                postDelayed({
+                    if (!longPressTriggered && !isSelecting) {
+                        longPressTriggered = true
+                        vibrate()
+                        startSelection()
+                    }
+                }, 500) // 500ms for long press
+                
                 isFocusable = true
                 isFocusableInTouchMode = true
                 requestFocus()
                 requestFocusFromTouch()
-                post {
-                    showKeyboard()
-                }
                 performClick()
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (longPressTriggered || isSelecting) {
+                    isSelecting = true
+                    updateSelection(event.x, event.y)
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                removeCallbacks(null) // Cancel long press detection
+                if (isSelecting) {
+                    // Selection completed - copy to clipboard
+                    copySelection()
+                    isSelecting = false
+                } else if (!longPressTriggered) {
+                    // Normal tap - show keyboard
+                    post { showKeyboard() }
+                }
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                removeCallbacks(null)
+                isSelecting = false
             }
         }
         return true
+    }
+    
+    /**
+     * Start text selection mode
+     */
+    private fun startSelection() {
+        // TODO: Implement native selection start
+        // For now, just provide visual feedback
+        Toast.makeText(context, "Selection mode - drag to select", Toast.LENGTH_SHORT).show()
+    }
+    
+    /**
+     * Update selection based on drag position
+     */
+    private fun updateSelection(x: Float, y: Float) {
+        // TODO: Implement native selection update
+        // This would communicate with the native terminal to set selection bounds
+    }
+    
+    /**
+     * Copy current selection to clipboard
+     */
+    private fun copySelection() {
+        val selectedText = currentSession?.copySelection()
+        if (!selectedText.isNullOrEmpty()) {
+            val clip = ClipData.newPlainText("Terminal", selectedText)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Paste from clipboard
+     */
+    fun pasteFromClipboard() {
+        val clip = clipboard.primaryClip
+        if (clip != null && clip.itemCount > 0) {
+            val text = clip.getItemAt(0).text?.toString()
+            if (!text.isNullOrEmpty()) {
+                currentSession?.paste(text)
+                requestRender()
+            }
+        }
+    }
+    
+    /**
+     * Provide haptic feedback
+     */
+    private fun vibrate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(50)
+        }
     }
 
     override fun performClick(): Boolean {
@@ -242,46 +353,154 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         val session = currentSession ?: return super.onKeyDown(keyCode, event)
-
-        // Handle special keys
-        when (keyCode) {
-            KeyEvent.KEYCODE_DEL -> {
-                session.sendText("\b")
-                requestRender()
-                return true
-            }
-            KeyEvent.KEYCODE_FORWARD_DEL -> {
-                session.sendText("\u001b[3~") // Delete key sequence
-                requestRender()
-                return true
-            }
-            KeyEvent.KEYCODE_ENTER -> {
-                session.sendText("\r")
-                requestRender()
-                return true
-            }
-            KeyEvent.KEYCODE_TAB -> {
-                session.sendText("\t")
-                requestRender()
-                return true
-            }
-        }
-
+        
+        // Update modifier key states
+        ctrlPressed = event.isCtrlPressed
+        altPressed = event.isAltPressed
+        shiftPressed = event.isShiftPressed
+        metaPressed = event.isMetaPressed
+        
         val modifiers = buildModifiers(event)
-        session.sendKey(keyCode, modifiers, true)
 
-        val unicodeChar = event.getUnicodeChar(event.metaState)
-        if (unicodeChar != 0 && !event.isCtrlPressed && !event.isAltPressed) {
-            session.sendChar(unicodeChar)
+        // Handle special keys with improved sequences
+        when (keyCode) {
+            // Backspace - send proper backspace character
+            KeyEvent.KEYCODE_DEL -> {
+                session.sendText("\b") // BS (0x08)
+                requestRender()
+                return true
+            }
+            // Forward Delete
+            KeyEvent.KEYCODE_FORWARD_DEL -> {
+                session.sendText("\u001b[3~") // Delete key sequence (ESC [ 3 ~)
+                requestRender()
+                return true
+            }
+            // Enter/Return
+            KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                session.sendText("\r") // CR (0x0D)
+                requestRender()
+                return true
+            }
+            // Tab
+            KeyEvent.KEYCODE_TAB -> {
+                if (shiftPressed) {
+                    session.sendText("\u001b[Z") // Shift+Tab sequence
+                } else {
+                    session.sendText("\t") // HT (0x09)
+                }
+                requestRender()
+                return true
+            }
+            // Escape
+            KeyEvent.KEYCODE_ESCAPE -> {
+                session.sendText("\u001b") // ESC (0x1B)
+                requestRender()
+                return true
+            }
+            // Arrow keys with modifier support
+            KeyEvent.KEYCODE_DPAD_UP -> {
+                val seq = if (ctrlPressed) "\u001b[1;5A" else "\u001b[A"
+                session.sendText(seq)
+                requestRender()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                val seq = if (ctrlPressed) "\u001b[1;5B" else "\u001b[B"
+                session.sendText(seq)
+                requestRender()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                val seq = if (ctrlPressed) "\u001b[1;5C" else "\u001b[C"
+                session.sendText(seq)
+                requestRender()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                val seq = if (ctrlPressed) "\u001b[1;5D" else "\u001b[D"
+                session.sendText(seq)
+                requestRender()
+                return true
+            }
+            // Home key
+            KeyEvent.KEYCODE_MOVE_HOME -> {
+                val seq = if (ctrlPressed) "\u001b[1;5H" else "\u001b[H"
+                session.sendText(seq)
+                requestRender()
+                return true
+            }
+            // End key
+            KeyEvent.KEYCODE_MOVE_END -> {
+                val seq = if (ctrlPressed) "\u001b[1;5F" else "\u001b[F"
+                session.sendText(seq)
+                requestRender()
+                return true
+            }
+            // Page Up
+            KeyEvent.KEYCODE_PAGE_UP -> {
+                session.sendText("\u001b[5~")
+                requestRender()
+                return true
+            }
+            // Page Down
+            KeyEvent.KEYCODE_PAGE_DOWN -> {
+                session.sendText("\u001b[6~")
+                requestRender()
+                return true
+            }
+            // Insert key
+            KeyEvent.KEYCODE_INSERT -> {
+                session.sendText("\u001b[2~")
+                requestRender()
+                return true
+            }
+            // Space with Ctrl -> NUL (0x00)
+            KeyEvent.KEYCODE_SPACE -> {
+                if (ctrlPressed) {
+                    session.sendText("\u0000") // NUL
+                } else {
+                    session.sendText(" ")
+                }
+                requestRender()
+                return true
+            }
         }
 
+        // Handle Ctrl+letter combinations
+        if (ctrlPressed && keyCode >= KeyEvent.KEYCODE_A && keyCode <= KeyEvent.KEYCODE_Z) {
+            val ctrlChar = (keyCode - KeyEvent.KEYCODE_A + 1).toChar()
+            session.sendText(ctrlChar.toString())
+            requestRender()
+            return true
+        }
+
+        // Handle regular character input
+        val unicodeChar = event.getUnicodeChar(event.metaState)
+        if (unicodeChar != 0) {
+            // Send the character directly
+            session.sendChar(unicodeChar)
+            requestRender()
+            return true
+        }
+
+        // Fall back to key event for unhandled keys
+        session.sendKey(keyCode, modifiers, true)
         requestRender()
         return true
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         val session = currentSession ?: return super.onKeyUp(keyCode, event)
-        session.sendKey(keyCode, buildModifiers(event), false)
+        
+        // Update modifier key states
+        ctrlPressed = event.isCtrlPressed
+        altPressed = event.isAltPressed
+        shiftPressed = event.isShiftPressed
+        metaPressed = event.isMetaPressed
+        
+        val modifiers = buildModifiers(event)
+        session.sendKey(keyCode, modifiers, false)
         requestRender()
         return true
     }

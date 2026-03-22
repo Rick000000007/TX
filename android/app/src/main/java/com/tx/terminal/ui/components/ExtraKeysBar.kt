@@ -19,11 +19,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
+/**
+ * Extra keys bar for terminal input
+ * Provides easy access to special keys that are hard to type on soft keyboards
+ * 
+ * Keys provided:
+ * - ESC, TAB for control sequences
+ * - Arrow keys for navigation
+ * - HOME, END, PGUP, PGDN for cursor movement
+ * - Ctrl+C, Ctrl+D, Ctrl+Z for signals
+ * - Copy/Paste for clipboard operations
+ */
 @Composable
 fun ExtraKeysBar(
     onKeyPressed: (Int, Int) -> Unit,
+    onSendText: (String) -> Unit,
     onCtrlC: () -> Unit,
     onCtrlD: () -> Unit,
+    onCtrlZ: () -> Unit,
     onCopy: () -> Unit,
     onPaste: () -> Unit
 ) {
@@ -41,6 +54,7 @@ fun ExtraKeysBar(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Control keys section
             ExtraKeyButton(
                 text = "ESC",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_ESCAPE, 0) }
@@ -52,25 +66,31 @@ fun ExtraKeysBar(
 
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
+            // Arrow keys section
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowUp,
+                contentDescription = "Up",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_UP, 0) }
             )
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Down",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_DOWN, 0) }
             )
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowLeft,
+                contentDescription = "Left",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_LEFT, 0) }
             )
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowRight,
+                contentDescription = "Right",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_RIGHT, 0) }
             )
 
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
+            // Navigation keys section
             ExtraKeyButton(
                 text = "HOME",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_MOVE_HOME, 0) }
@@ -90,6 +110,7 @@ fun ExtraKeysBar(
 
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
+            // Signal keys section (accent color for visibility)
             ExtraKeyButton(
                 text = "^C",
                 onClick = onCtrlC,
@@ -102,17 +123,28 @@ fun ExtraKeysBar(
             )
             ExtraKeyButton(
                 text = "^Z",
-                onClick = { onKeyPressed(KeyEvent.KEYCODE_Z, KeyEvent.META_CTRL_ON) }
+                onClick = onCtrlZ,
+                isAccent = true
+            )
+            
+            // Ctrl+L for clear screen
+            ExtraKeyButton(
+                text = "^L",
+                onClick = { onSendText("\u000c") }, // FF (Ctrl+L)
+                isAccent = false
             )
 
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
+            // Clipboard section
             ExtraKeyIcon(
                 icon = Icons.Default.ContentCopy,
+                contentDescription = "Copy",
                 onClick = onCopy
             )
             ExtraKeyIcon(
                 icon = Icons.Default.ContentPaste,
+                contentDescription = "Paste",
                 onClick = onPaste
             )
         }
@@ -153,6 +185,7 @@ private fun ExtraKeyButton(
 @Composable
 private fun ExtraKeyIcon(
     icon: ImageVector,
+    contentDescription: String?,
     onClick: () -> Unit
 ) {
     FilledTonalIconButton(
@@ -161,7 +194,7 @@ private fun ExtraKeyIcon(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = contentDescription,
             modifier = Modifier.size(20.dp)
         )
     }

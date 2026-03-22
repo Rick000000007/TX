@@ -16,12 +16,11 @@ bool Terminal::initialize(const TerminalConfig& config) {
     // Initialize screen
     screen_.resize(config.cols, config.rows);
     
-    
     // Renderer is initialized later, after EGL context is ready
     renderer_.setConfig(config.render);
     
-    // Initialize PTY
-    if (!pty_.open(config.shell, config.env).success) {
+    // Initialize PTY with working directory support
+    if (!pty_.open(config.shell, config.env, config.cwd).success) {
         return false;
     }
     
@@ -286,7 +285,7 @@ ParserActions Terminal::createParserActions() {
     actions.csi = [this](uint8_t cmd, const int* args, int argc) {
         // Handle CSI sequences
         int arg0 = argc > 0 ? args[0] : 0;
-        int arg1 = argc > 1 ? args[1] : 0;
+        int arg1 = argc > 1 ? args[1] : 1;
         
         switch (cmd) {
             case '@':  // ICH - Insert Characters

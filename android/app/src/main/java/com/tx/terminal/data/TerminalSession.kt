@@ -1,7 +1,9 @@
 package com.tx.terminal.data
 
+import android.content.Context
 import android.util.Log
 import android.view.Surface
+import com.tx.terminal.TXApplication
 import com.tx.terminal.jni.NativeTerminal
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -11,10 +13,11 @@ import java.util.concurrent.atomic.AtomicLong
  * Represents a single terminal session with its own PTY and shell
  * 
  * Features:
- * - Native PTY-backed terminal session
+ * - Native PTY-backed terminal session with proper environment setup
  * - Automatic screen update notifications
  * - Session lifecycle management
  * - Error handling and recovery
+ * - App-private working directory and environment variables
  */
 class TerminalSession(
     val id: String,
@@ -22,13 +25,35 @@ class TerminalSession(
     private val shellPath: String = "/system/bin/sh",
     private val initialCommand: String? = null,
     private val columns: Int = 80,
-    private val rows: Int = 24
+    private val rows: Int = 24,
+    private val environmentConfig: EnvironmentConfig? = null
 ) {
     companion object {
         private const val TAG = "TerminalSession"
         private val sessionCounter = AtomicLong(0)
         
         fun generateId(): String = "session_${sessionCounter.incrementAndGet()}"
+        
+        /**
+         * Create a new terminal session with proper environment setup
+         */
+        fun createWithEnvironment(
+            context: Context,
+            name: String = "Terminal",
+            shellPath: String = "/system/bin/sh",
+            initialCommand: String? = null
+        ): TerminalSession {
+            // Initialize terminal environment (creates directories and builds env vars)
+            val envConfig = TerminalEnvironment.initialize(context)
+            
+            return TerminalSession(
+                id = generateId(),
+                name = name,
+                shellPath = shellPath,
+                initialCommand = initialCommand,
+                environmentConfig = envConfig
+            )
+        }
     }
     
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -70,12 +95,33 @@ class TerminalSession(
         }
         
         try {
-            nativeHandle = NativeTerminal.create(
-                columns,
-                rows,
-                shellPath,
-                initialCommand
-            )
+            // Get environment configuration
+            val envConfig = environmentConfig
+            
+            if (envConfig != null) {
+                // Use proper environment setup
+                nativeHandle = NativeTerminal.createWithEnvironment(
+                    columns,
+                    rows,
+                    shellPath,
+                    initialCommand,
+                    envConfig.workingDirectory,
+                    envConfig.environmentVariables
+                )
+            } else {
+                // Fallback to basic setup (should not happen in normal flow)
+                Log.w(TAG, "No environment config provided, using fallback")
+                val context = TXApplication.instance
+                val fallbackEnv = TerminalEnvironment.initialize(context)
+                nativeHandle = NativeTerminal.createWithEnvironment(
+                    columns,
+                    rows,
+                    shellPath,
+                    initialCommand,
+                    fallbackEnv.workingDirectory,
+                    fallbackEnv.environmentVariables
+                )
+            }
             
             if (nativeHandle == 0L) {
                 Log.e(TAG, "Failed to create native terminal")
@@ -348,28 +394,34 @@ class SessionManager {
         get() = _sessions.value.find { it.id == _activeSessionId.value }
     
     /**
-     * Create a new session
+     * Create a new session with proper environment setup
      */
     fun createSession(
         name: String = "Terminal",
         shellPath: String = "/system/bin/sh",
         initialCommand: String? = null
-    ): TerminalSession {
-        val session = TerminalSession(
-            id = TerminalSession.generateId(),
+    ): TerminalSession? {
+        val session = TerminalSession.createWithEnvironment(
+            context = TXApplication.instance,
             name = name,
             shellPath = shellPath,
             initialCommand = initialCommand
         )
         
+        // Initialize the session first
+        if (!session.initialize()) {
+            // Initialization failed - clean up and return null
+            Log.e("SessionManager", "Failed to initialize session, removing from list")
+            session.finish()
+            return null
+        }
+        
+        // Only add to list if initialization succeeded
         _sessions.value += session
         
-        // Initialize the session
-        if (session.initialize()) {
-            // Make it active if it's the first session
-            if (_sessions.value.size == 1) {
-                _activeSessionId.value = session.id
-            }
+        // Make it active if it's the first session
+        if (_sessions.value.size == 1) {
+            _activeSessionId.value = session.id
         }
         
         return session
