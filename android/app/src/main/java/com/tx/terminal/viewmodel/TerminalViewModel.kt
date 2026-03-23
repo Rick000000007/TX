@@ -214,36 +214,34 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
         _isKeyboardVisible.value = visible
     }
 
-    /**
-     * Increase font size
-     */
-    fun increaseFontSize() {
-        val newSize = (_fontSize.value + 1f).coerceAtMost(32f)
+    fun setFontSize(size: Float) {
+        val newSize = size.coerceIn(8f, 32f)
+        if (_fontSize.value == newSize) return
         _fontSize.value = newSize
         viewModelScope.launch {
             preferences.setFontSize(newSize)
         }
+    }
+
+    /**
+     * Increase font size
+     */
+    fun increaseFontSize() {
+        setFontSize(_fontSize.value + 1f)
     }
 
     /**
      * Decrease font size
      */
     fun decreaseFontSize() {
-        val newSize = (_fontSize.value - 1f).coerceAtLeast(8f)
-        _fontSize.value = newSize
-        viewModelScope.launch {
-            preferences.setFontSize(newSize)
-        }
+        setFontSize(_fontSize.value - 1f)
     }
 
     /**
      * Reset font size
      */
     fun resetFontSize() {
-        _fontSize.value = TerminalPreferences.Defaults.FONT_SIZE
-        viewModelScope.launch {
-            preferences.setFontSize(TerminalPreferences.Defaults.FONT_SIZE)
-        }
+        setFontSize(TerminalPreferences.Defaults.FONT_SIZE)
     }
 
     /**
