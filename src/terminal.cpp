@@ -269,7 +269,7 @@ ParserActions Terminal::createParserActions() {
             case 0x07: /* BEL */ break;
             case 0x08: /* BS */ screen_.backspace(); break;
             case 0x09: /* HT */ screen_.horizontalTab(); break;
-            case 0x0A: /* LF */ screen_.lineFeed(); break;
+            case 0x0A: /* LF */ screen_.carriageReturn(); screen_.lineFeed(); break;
             case 0x0B: /* VT */ screen_.lineFeed(); break;
             case 0x0C: /* FF */ screen_.lineFeed(); break;
             case 0x0D: /* CR */ screen_.carriageReturn(); break;
