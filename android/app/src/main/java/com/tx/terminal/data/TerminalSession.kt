@@ -434,10 +434,8 @@ class SessionManager {
         // Only add to list if initialization succeeded
         _sessions.value += session
         
-        // Make it active if it's the first session
-        if (_sessions.value.size == 1) {
-            _activeSessionId.value = session.id
-        }
+        // Always switch to the newly created session
+        _activeSessionId.value = session.id
         
         return session
     }
