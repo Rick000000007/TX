@@ -202,7 +202,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         post {
             requestLayout()
-            applyTerminalSize()
             invalidate()
             requestRender()
             requestFocus()
