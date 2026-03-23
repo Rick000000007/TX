@@ -228,7 +228,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
     textAscent = fm.ascent
     baselineOffset = -fm.ascent
 
-    cellWidth = paint.measureText("M").coerceAtLeast(1f)
+    val sample = "MMMMMMMMMM"
+    cellWidth = (paint.measureText(sample) / sample.length).coerceAtLeast(1f)
     cellHeight = (fm.descent - fm.ascent + fm.leading).coerceAtLeast(1f)
 
     selectedTextPaint.typeface = Typeface.MONOSPACE
@@ -244,7 +245,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
     val usableWidth = (width - horizontalPadding * 2).coerceAtLeast(1f)
     val usableHeight = (height - verticalPadding * 2).coerceAtLeast(1f)
 
-    val measuredCellWidth = paint.measureText("M").coerceAtLeast(1f)
+    val sample = "MMMMMMMMMM"
+    val measuredCellWidth = (paint.measureText(sample) / sample.length).coerceAtLeast(1f)
     val fm = paint.fontMetrics
     val measuredCellHeight = (fm.descent - fm.ascent + fm.leading).coerceAtLeast(1f)
 
