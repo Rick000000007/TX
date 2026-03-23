@@ -237,12 +237,16 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val usableWidth = (width - horizontalPadding * 2).coerceAtLeast(1f)
         val usableHeight = (height - verticalPadding * 2).coerceAtLeast(1f)
 
-        val newColumns = floor(usableWidth / cellWidth).toInt().coerceAtLeast(2)
+        val measuredCellWidth = paint.measureText("M").coerceAtLeast(1f)
+        val newColumns = floor(usableWidth / measuredCellWidth).toInt().coerceAtLeast(2)
         val newRows = floor(usableHeight / cellHeight).toInt().coerceAtLeast(2)
 
-        if (newColumns != terminalColumns || newRows != terminalRows) {
-            terminalColumns = newColumns
-            terminalRows = newRows
+        val sizeChanged = newColumns != terminalColumns || newRows != terminalRows
+        terminalColumns = newColumns
+        terminalRows = newRows
+        cellWidth = usableWidth / terminalColumns
+
+        if (sizeChanged) {
             viewModel?.resize(terminalColumns, terminalRows)
         }
     }
@@ -323,7 +327,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
             for (col in 0 until terminalColumns) {
                 val left = horizontalPadding + (col * cellWidth)
-                val charX = left
                 val right = left + cellWidth
 
                 val isSelected = if (session != null) {
@@ -342,7 +345,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
                 if (col < line.length) {
                     val ch = line[col].toString()
-                    canvas.drawText(ch, charX, baselineY, if (isSelected) selectedTextPaint else paint)
+                    val textPaint = if (isSelected) selectedTextPaint else paint
+                    val charWidth = textPaint.measureText(ch)
+                    val charX = left + ((cellWidth - charWidth) * 0.5f)
+                    canvas.drawText(ch, charX, baselineY, textPaint)
                 }
             }
         }
