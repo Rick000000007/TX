@@ -94,13 +94,13 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.parseColor("#616161")
+        color = android.graphics.Color.WHITE
         style = Paint.Style.FILL
     }
 
     private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.MONOSPACE
-        color = android.graphics.Color.WHITE
+        color = android.graphics.Color.BLACK
         textSize = fontSizeSp
     }
 
