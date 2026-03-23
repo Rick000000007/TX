@@ -557,7 +557,7 @@ Java_com_tx_terminal_jni_NativeTerminal_getRowText(
                 content += static_cast<char>(0x80 | (cp & 0x3F));
             }
         } else {
-            content += q{ };
+            content += ' ';
         }
     }
 
