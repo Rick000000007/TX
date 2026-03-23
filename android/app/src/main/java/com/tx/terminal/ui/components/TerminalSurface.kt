@@ -227,7 +227,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         val bounds = android.graphics.Rect()
         paint.getTextBounds("W", 0, 1, bounds)
-        cellWidth = paint.measureText(" ").coerceAtLeast(1f)
+        cellWidth = paint.measureText("M").coerceAtLeast(1f)
         cellHeight = (fm.descent - fm.ascent).coerceAtLeast(bounds.height().toFloat()).coerceAtLeast(1f)
     }
 
