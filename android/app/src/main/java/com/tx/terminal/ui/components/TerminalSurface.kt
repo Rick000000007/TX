@@ -93,14 +93,14 @@ class TerminalSurfaceView(context: Context) : View(context) {
         textSize = fontSizeSp
     }
 
-    private val selectionPaint = Paint().apply {
-        color = android.graphics.Color.parseColor("#9E9E9E")
+    private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#616161")
         style = Paint.Style.FILL
     }
 
     private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.MONOSPACE
-        color = android.graphics.Color.BLACK
+        color = android.graphics.Color.WHITE
         textSize = fontSizeSp
     }
 
