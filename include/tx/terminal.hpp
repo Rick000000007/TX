@@ -46,6 +46,7 @@ public:
     void onMouseScroll(int delta);
     void onResize(int width, int height);
     bool initializeRenderer(int width, int height);
+    void resizeTerminal(int cols, int rows);
     
     // Text input
     void sendText(std::string_view text);

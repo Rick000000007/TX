@@ -399,7 +399,7 @@ Java_com_tx_terminal_jni_NativeTerminal_resize(
     std::lock_guard<std::mutex> lock(instances_mutex);
     auto it = instances.find(handle);
     if (it != instances.end() && it->second->terminal) {
-        it->second->terminal->getPTY().resize(columns, rows);
+        it->second->terminal->resizeTerminal(columns, rows);
     }
 }
 

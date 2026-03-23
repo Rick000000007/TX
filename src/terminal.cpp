@@ -143,6 +143,11 @@ void Terminal::onResize(int width, int height) {
     handleResize(width, height);
 }
 
+void Terminal::resizeTerminal(int cols, int rows) {
+    screen_.resize(cols, rows);
+    pty_.resize(cols, rows);
+}
+
 void Terminal::sendText(std::string_view text) {
     if (screen_.getSelection().active) {
         // Bracketed paste mode
