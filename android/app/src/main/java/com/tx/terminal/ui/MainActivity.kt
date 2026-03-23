@@ -7,7 +7,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.core.view.WindowCompat
 import com.tx.terminal.ui.screens.MainScreen
 import com.tx.terminal.ui.theme.TXTerminalTheme
 import com.tx.terminal.viewmodel.TerminalViewModel
@@ -20,7 +19,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         android.util.Log.d("TX_DEBUG", "MainActivity onCreate")
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             TXTerminalTheme {

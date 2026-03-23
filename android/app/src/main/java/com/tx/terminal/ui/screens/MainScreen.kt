@@ -18,6 +18,9 @@ import kotlinx.coroutines.launch
  * Main screen for TX Terminal
  * Contains the terminal surface, tab bar, extra keys, and navigation drawer
  */
+
+private fun nextTerminalName(existingCount: Int): String = "Terminal ${existingCount + 1}"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: TerminalViewModel) {
@@ -25,7 +28,6 @@ fun MainScreen(viewModel: TerminalViewModel) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     
-    var showNewSessionDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     
     val sessions by viewModel.sessions.collectAsState()
@@ -49,7 +51,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
                     label = { Text("New Session") },
                     selected = false,
                     onClick = {
-                        showNewSessionDialog = true
+                        viewModel.createSession(nextTerminalName(sessions.size))
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -136,7 +138,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
                             DropdownMenuItem(
                                 text = { Text("New Session") },
                                 onClick = {
-                                    showNewSessionDialog = true
+                                    viewModel.createSession(nextTerminalName(sessions.size))
                                     menuExpanded = false
                                 },
                                 leadingIcon = {
@@ -243,16 +245,6 @@ fun MainScreen(viewModel: TerminalViewModel) {
     }
     
     // Dialogs
-    if (showNewSessionDialog) {
-        NewSessionDialog(
-            onDismiss = { showNewSessionDialog = false },
-            onConfirm = { name ->
-                viewModel.createSession(name)
-                showNewSessionDialog = false
-            }
-        )
-    }
-    
     if (showSettingsDialog) {
         SettingsDialog(
             viewModel = viewModel,
