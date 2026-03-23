@@ -84,8 +84,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
     private var foregroundColorInt: Int = android.graphics.Color.WHITE
     private var fontSizeSp: Float = 14f
 
-    private val horizontalPadding = 8f
-    private val verticalPadding = 8f
+    private val horizontalPadding = 0f
+    private val verticalPadding = 0f
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.MONOSPACE
