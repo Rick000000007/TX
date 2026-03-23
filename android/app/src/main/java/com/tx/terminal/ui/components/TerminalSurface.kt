@@ -192,14 +192,18 @@ class TerminalSurfaceView(context: Context) : View(context) {
         currentSession?.onScreenUpdate = null
         currentSession = session
         currentSession?.onScreenUpdate = {
-            requestRender()
+            postInvalidateOnAnimation()
         }
 
+        requestLayout()
+        invalidate()
         requestFocus()
         requestFocusFromTouch()
-        requestRender()
+
         post {
+            requestLayout()
             applyTerminalSize()
+            invalidate()
             requestRender()
             requestFocus()
             requestFocusFromTouch()
