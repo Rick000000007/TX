@@ -227,7 +227,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         val bounds = android.graphics.Rect()
         paint.getTextBounds("W", 0, 1, bounds)
-        cellWidth = paint.measureText("W").coerceAtLeast(bounds.width().toFloat()).coerceAtLeast(1f)
+        cellWidth = paint.measureText(" ").coerceAtLeast(1f)
         cellHeight = (fm.descent - fm.ascent).coerceAtLeast(bounds.height().toFloat()).coerceAtLeast(1f)
     }
 
@@ -353,14 +353,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 val cursorRow = NativeTerminal.getCursorRow(session.getNativeHandle())
 
                 if (cursorRow in 0 until terminalRows) {
-                    val line = if (cursorRow < lines.size) lines[cursorRow] else ""
-                    val visibleLine = if (line.length > terminalColumns) {
-                        line.take(terminalColumns)
-                    } else {
-                        line
-                    }
-
-                    val cursorCol = rawCursorCol.coerceIn(0, visibleLine.length)
+                    val cursorCol = rawCursorCol.coerceIn(0, terminalColumns)
 
                     if (cursorCol in 0..terminalColumns) {
                         val left = horizontalPadding + (cursorCol * cellWidth)
