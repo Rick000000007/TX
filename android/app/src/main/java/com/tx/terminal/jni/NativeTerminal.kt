@@ -113,6 +113,9 @@ object NativeTerminal {
      */
     @JvmStatic
     external fun getScreenContent(handle: Long): String
+
+    
+    external fun getRowText(handle: Long, row: Int): String
     
     /**
      * Get number of columns

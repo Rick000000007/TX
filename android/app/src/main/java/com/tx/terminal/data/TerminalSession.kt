@@ -291,6 +291,19 @@ class TerminalSession(
             ""
         }
     }
+
+    fun getRowText(row: Int): String {
+        return if (nativeHandle != 0L) {
+            try {
+                NativeTerminal.getRowText(nativeHandle, row)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get row text", e)
+                ""
+            }
+        } else {
+            ""
+        }
+    }
     
     /**
      * Get screen dimensions

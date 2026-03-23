@@ -313,8 +313,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
         canvas.drawColor(backgroundColorInt)
 
         val session = currentSession
-        val text = session?.getScreenContent().orEmpty()
-        val lines = if (text.isEmpty()) emptyList() else text.split("\n")
 
         for (row in 0 until terminalRows) {
             val top = verticalPadding + (row * cellHeight)
@@ -323,7 +321,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
             if (top > height - verticalPadding) break
 
-            val line = if (row < lines.size) lines[row] else ""
+            val line = session?.getRowText(row).orEmpty()
 
             for (col in 0 until terminalColumns) {
                 val left = horizontalPadding + (col * cellWidth)

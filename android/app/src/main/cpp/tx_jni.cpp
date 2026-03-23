@@ -513,6 +513,57 @@ Java_com_tx_terminal_jni_NativeTerminal_getScreenContent(
     return env->NewStringUTF(content.c_str());
 }
 
+
+JNIEXPORT jstring JNICALL
+Java_com_tx_terminal_jni_NativeTerminal_getRowText(
+    JNIEnv* env,
+    jclass clazz,
+    jlong handle,
+    jint row
+) {
+    std::lock_guard<std::mutex> lock(instances_mutex);
+    auto it = instances.find(handle);
+    if (it == instances.end() || !it->second->terminal) {
+        return env->NewStringUTF("");
+    }
+
+    const auto& screen = it->second->terminal->getScreen();
+    if (row < 0 || row >= screen.rows()) {
+        return env->NewStringUTF("");
+    }
+
+    const auto* line = screen.getRow(row);
+    if (!line) {
+        return env->NewStringUTF("");
+    }
+
+    std::string content;
+    for (int col = 0; col < screen.cols(); ++col) {
+        if (!line[col].empty()) {
+            char32_t cp = line[col].codepoint;
+            if (cp < 0x80) {
+                content += static_cast<char>(cp);
+            } else if (cp < 0x800) {
+                content += static_cast<char>(0xC0 | (cp >> 6));
+                content += static_cast<char>(0x80 | (cp & 0x3F));
+            } else if (cp < 0x10000) {
+                content += static_cast<char>(0xE0 | (cp >> 12));
+                content += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                content += static_cast<char>(0x80 | (cp & 0x3F));
+            } else {
+                content += static_cast<char>(0xF0 | (cp >> 18));
+                content += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+                content += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+                content += static_cast<char>(0x80 | (cp & 0x3F));
+            }
+        } else {
+            content += q{ };
+        }
+    }
+
+    return env->NewStringUTF(content.c_str());
+}
+
 JNIEXPORT jint JNICALL
 Java_com_tx_terminal_jni_NativeTerminal_getColumns(
     JNIEnv* env,
