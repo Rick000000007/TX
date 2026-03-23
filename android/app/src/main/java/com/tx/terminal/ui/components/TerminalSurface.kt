@@ -94,7 +94,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionPaint = Paint().apply {
-        color = android.graphics.Color.WHITE
+        color = android.graphics.Color.parseColor("#9E9E9E")
         style = Paint.Style.FILL
     }
 
@@ -110,7 +110,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionHandlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.WHITE
+        color = android.graphics.Color.parseColor("#9E9E9E")
         style = Paint.Style.FILL
     }
 
