@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
@@ -55,23 +56,25 @@ fun TerminalSurface(
     Box(
         modifier = modifier.background(Color(backgroundColor))
     ) {
-        AndroidView(
-            factory = { ctx ->
-                TerminalSurfaceView(ctx).apply {
-                    this.viewModel = viewModel
-                    updateColors(backgroundColor, foregroundColor)
-                    updateFontSize(fontSize)
-                    setSession(activeSession)
-                }
-            },
-            update = { view ->
-                view.viewModel = viewModel
-                view.updateColors(backgroundColor, foregroundColor)
-                view.updateFontSize(fontSize)
-                view.setSession(activeSession)
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+        key(activeSessionId) {
+            AndroidView(
+                factory = { ctx ->
+                    TerminalSurfaceView(ctx).apply {
+                        this.viewModel = viewModel
+                        updateColors(backgroundColor, foregroundColor)
+                        updateFontSize(fontSize)
+                        setSession(activeSession)
+                    }
+                },
+                update = { view ->
+                    view.viewModel = viewModel
+                    view.updateColors(backgroundColor, foregroundColor)
+                    view.updateFontSize(fontSize)
+                    view.setSession(activeSession)
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
