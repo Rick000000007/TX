@@ -107,7 +107,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
                 TopAppBar(
                     title = { 
                         val activeSession = viewModel.activeSession
-                        Text(activeSession?.title?.value ?: "TX Terminal")
+                        Text("TX Terminal")
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {

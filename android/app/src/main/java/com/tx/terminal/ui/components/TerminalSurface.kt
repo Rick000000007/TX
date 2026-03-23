@@ -270,7 +270,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     baselineOffset = -fm.ascent
 
     if (sizeChanged) {
-        viewModel?.resize(terminalColumns, terminalRows)
+        currentSession?.resize(terminalColumns, terminalRows)
     }
 }
 
