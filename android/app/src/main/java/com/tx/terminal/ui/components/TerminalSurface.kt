@@ -197,9 +197,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         requestFocus()
         requestFocusFromTouch()
-        applyTerminalSize()
         requestRender()
         post {
+            applyTerminalSize()
+            requestRender()
             requestFocus()
             requestFocusFromTouch()
             showKeyboard()
