@@ -266,18 +266,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 }
 
-    private fun startRenderLoop() {
-        renderScope.launch {
-            while (isRendering && isAttachedToWindow) {
-                if (renderRequested) {
-                    renderRequested = false
-                    render()
-                }
-                delay(16)
-            }
-        }
-    }
-
     private fun startCursorBlink() {
         blinkScope.launch {
             while (isRendering && isAttachedToWindow) {
@@ -304,7 +292,6 @@ class TerminalSurfaceView(context: Context) : View(context) {
         blinkScope.cancel()
         renderScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         blinkScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-        startRenderLoop()
         startCursorBlink()
         applyTerminalSize()
     }
