@@ -198,9 +198,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
             }
         ) { paddingValues ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                modifier = Modifier.fillMaxSize()
             ) {
                 // Tab bar
                 if (sessions.size > 1) {
