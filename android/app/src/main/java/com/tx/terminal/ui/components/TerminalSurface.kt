@@ -88,7 +88,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     private var fontSizeSp: Float = 14f
 
     private val horizontalPadding = 0f
-    private val verticalPadding = 0f
+    private val verticalPadding = 2f
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.MONOSPACE
