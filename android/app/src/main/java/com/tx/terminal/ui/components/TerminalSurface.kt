@@ -221,35 +221,48 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private fun recalculateMetrics() {
-        val fm = paint.fontMetrics
-        textAscent = fm.ascent
-        baselineOffset = -fm.ascent
+    paint.typeface = Typeface.MONOSPACE
+    paint.isLinearText = true
 
-        val bounds = android.graphics.Rect()
-        paint.getTextBounds("W", 0, 1, bounds)
-        cellWidth = paint.measureText("M").coerceAtLeast(1f)
-        cellHeight = (fm.descent - fm.ascent).coerceAtLeast(bounds.height().toFloat()).coerceAtLeast(1f)
-    }
+    val fm = paint.fontMetrics
+    textAscent = fm.ascent
+    baselineOffset = -fm.ascent
+
+    cellWidth = paint.measureText("M").coerceAtLeast(1f)
+    cellHeight = (fm.descent - fm.ascent + fm.leading).coerceAtLeast(1f)
+
+    selectedTextPaint.typeface = Typeface.MONOSPACE
+    selectedTextPaint.textSize = fontSizeSp
+
+    val selectedFm = selectedTextPaint.fontMetrics
+    selectedTextPaint.isLinearText = true
+}
 
     private fun applyTerminalSize() {
-        if (width <= 0 || height <= 0) return
+    if (width <= 0 || height <= 0) return
 
-        val usableWidth = (width - horizontalPadding * 2).coerceAtLeast(1f)
-        val usableHeight = (height - verticalPadding * 2).coerceAtLeast(1f)
+    val usableWidth = (width - horizontalPadding * 2).coerceAtLeast(1f)
+    val usableHeight = (height - verticalPadding * 2).coerceAtLeast(1f)
 
-        val measuredCellWidth = paint.measureText("M").coerceAtLeast(1f)
-        val newColumns = floor(usableWidth / measuredCellWidth).toInt().coerceAtLeast(2)
-        val newRows = floor(usableHeight / cellHeight).toInt().coerceAtLeast(2)
+    val measuredCellWidth = paint.measureText("M").coerceAtLeast(1f)
+    val fm = paint.fontMetrics
+    val measuredCellHeight = (fm.descent - fm.ascent + fm.leading).coerceAtLeast(1f)
 
-        val sizeChanged = newColumns != terminalColumns || newRows != terminalRows
-        terminalColumns = newColumns
-        terminalRows = newRows
-        cellWidth = usableWidth / terminalColumns
+    val newColumns = floor(usableWidth / measuredCellWidth).toInt().coerceAtLeast(2)
+    val newRows = floor(usableHeight / measuredCellHeight).toInt().coerceAtLeast(2)
 
-        if (sizeChanged) {
-            viewModel?.resize(terminalColumns, terminalRows)
-        }
+    val sizeChanged = newColumns != terminalColumns || newRows != terminalRows
+
+    terminalColumns = newColumns
+    terminalRows = newRows
+    cellWidth = measuredCellWidth
+    cellHeight = measuredCellHeight
+    baselineOffset = -fm.ascent
+
+    if (sizeChanged) {
+        viewModel?.resize(terminalColumns, terminalRows)
     }
+}
 
     private fun startRenderLoop() {
         renderScope.launch {
