@@ -316,8 +316,17 @@ class TerminalSurfaceView(context: Context) : View(context) {
         canvas.drawColor(backgroundColorInt)
 
         val session = currentSession
+        val rowsToDraw = if (session != null) {
+            try {
+                session.getScreenDimensions().second.coerceAtMost(terminalRows)
+            } catch (_: Exception) {
+                terminalRows
+            }
+        } else {
+            terminalRows
+        }
 
-        for (row in 0 until terminalRows) {
+        for (row in 0 until rowsToDraw) {
             val top = verticalPadding + (row * cellHeight)
             val baselineY = top + baselineOffset
             val bottom = top + cellHeight
