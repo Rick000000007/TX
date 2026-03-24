@@ -97,13 +97,13 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.WHITE
+        color = android.graphics.Color.argb(110, 70, 130, 255)
         style = Paint.Style.FILL
     }
 
     private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.MONOSPACE
-        color = android.graphics.Color.BLACK
+        color = foregroundColorInt
         textSize = fontSizeSp
     }
 
@@ -113,7 +113,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionHandlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.parseColor("#9E9E9E")
+        color = android.graphics.Color.parseColor("#4A90E2")
         style = Paint.Style.FILL
     }
 
@@ -207,6 +207,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
         backgroundColorInt = bg
         foregroundColorInt = fg
         paint.color = fg
+        selectedTextPaint.color = fg
         setBackgroundColor(bg)
         requestRender()
     }
@@ -524,6 +525,24 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     parent?.requestDisallowInterceptTouchEvent(true)
                     invalidate()
                     return true
+                }
+
+                if (hasPersistentSelection) {
+                    val (tapCol, tapRow) = screenToCell(event.x, event.y)
+                    val insideSelection =
+                        tapRow in selectionStartRow..selectionEndRow &&
+                        (
+                            (selectionStartRow == selectionEndRow &&
+                             tapCol in selectionStartCol..selectionEndCol) ||
+                            (tapRow == selectionStartRow && tapCol >= selectionStartCol) ||
+                            (tapRow == selectionEndRow && tapCol <= selectionEndCol) ||
+                            (tapRow > selectionStartRow && tapRow < selectionEndRow)
+                        )
+
+                    if (!insideSelection) {
+                        clearPersistentSelection()
+                        invalidate()
+                    }
                 }
 
                 selectionStartX = event.x
