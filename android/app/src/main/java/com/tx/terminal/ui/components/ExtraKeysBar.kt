@@ -74,6 +74,9 @@ fun ExtraKeysBar(
                         ctrlVisualLocked = false
                         ctrlVisualActive = false
                         onCtrlLongPress()
+                    } else if (ctrlVisualActive) {
+                        ctrlVisualActive = false
+                        onCtrlLongPress()
                     } else {
                         ctrlVisualLocked = false
                         ctrlVisualActive = true

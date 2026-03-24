@@ -624,7 +624,12 @@ class TerminalSurfaceView(context: Context) : View(context) {
             else -> {
                 val unicode = event.unicodeChar
                 if (unicode != 0) {
-                    currentSession?.sendChar(unicode)
+                    val ctrlText = if (ctrlModifierActive()) ctrlCharFor(unicode.toChar().toString()) else null
+                    if (ctrlText != null) {
+                        currentSession?.sendText(ctrlText)
+                    } else {
+                        currentSession?.sendChar(unicode)
+                    }
                 } else {
                     currentSession?.sendKey(event.keyCode, modifiers, true)
                 }
