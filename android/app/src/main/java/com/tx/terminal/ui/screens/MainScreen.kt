@@ -29,6 +29,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
     val scope = rememberCoroutineScope()
     
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var terminalSurfaceView by remember { mutableStateOf<TerminalSurfaceView?>(null) }
     
     val sessions by viewModel.sessions.collectAsState()
     val activeSessionId by viewModel.activeSessionId.collectAsState()
@@ -211,15 +212,16 @@ fun MainScreen(viewModel: TerminalViewModel) {
                 ) {
                     TerminalSurface(
                         viewModel = viewModel,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        onViewReady = { terminalSurfaceView = it }
                     )
                 }
                 
                 // Extra keys
                 if (showExtraKeys) {
                     ExtraKeysBar(
-                        onKeyPressed = { key, modifiers ->
-                            viewModel.sendKey(key, modifiers, true)
+                        onKeyPressed = { key, modifiers, pressed ->
+                            viewModel.sendKey(key, modifiers, pressed)
                         },
                         onSendText = { text ->
                             viewModel.sendText(text)
@@ -228,7 +230,9 @@ fun MainScreen(viewModel: TerminalViewModel) {
                         onCtrlD = { viewModel.sendEOF() },
                         onCtrlZ = { viewModel.sendText("\u001a") }, // SUB (Ctrl+Z)
                         onCopy = { viewModel.copyToClipboard() },
-                        onPaste = { viewModel.pasteFromClipboard() }
+                        onPaste = { viewModel.pasteFromClipboard() },
+                        onCtrlTap = { terminalSurfaceView?.activateVirtualCtrl(false) },
+                        onCtrlLongPress = { terminalSurfaceView?.toggleVirtualCtrlLock() }
                     )
                 }
             }

@@ -46,7 +46,8 @@ import kotlin.math.floor
 @Composable
 fun TerminalSurface(
     viewModel: TerminalViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onViewReady: (TerminalSurfaceView) -> Unit = {}
 ) {
     val activeSessionId by viewModel.activeSessionId.collectAsState()
     val sessions by viewModel.sessions.collectAsState()
@@ -72,6 +73,7 @@ fun TerminalSurface(
                 factory = { ctx ->
                     TerminalSurfaceView(ctx).apply {
                         terminalViewHolder[0] = this
+                        onViewReady(this)
                         this.viewModel = viewModel
                         updateColors(backgroundColor, foregroundColor)
                         updateFontSize(fontSize)
@@ -80,6 +82,7 @@ fun TerminalSurface(
                 },
                 update = { view ->
                     terminalViewHolder[0] = view
+                    onViewReady(view)
                     view.viewModel = viewModel
                     view.updateColors(backgroundColor, foregroundColor)
                     view.updateFontSize(fontSize)
@@ -153,6 +156,9 @@ class TerminalSurfaceView(context: Context) : View(context) {
     private var altPressed = false
     private var shiftPressed = false
     private var metaPressed = false
+
+    private var virtualCtrlActive = false
+    private var virtualCtrlLocked = false
 
     private var selectionStartX = 0f
     private var selectionStartY = 0f
@@ -466,7 +472,16 @@ class TerminalSurfaceView(context: Context) : View(context) {
         return object : BaseInputConnection(this, true) {
             override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
                 if (!text.isNullOrEmpty()) {
-                    currentSession?.sendText(text.toString())
+                    val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
+                    if (ctrlText != null) {
+                        currentSession?.sendText(ctrlText)
+                        consumeVirtualCtrlIfNeeded()
+                    } else {
+                        currentSession?.sendText(text.toString())
+                        if (ctrlModifierActive()) {
+                            consumeVirtualCtrlIfNeeded()
+                        }
+                    }
                 }
                 return true
             }
@@ -490,6 +505,80 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         return handleKeyEvent(event)
+    }
+
+    fun activateVirtualCtrl(lock: Boolean) {
+        virtualCtrlLocked = lock
+        virtualCtrlActive = true
+        invalidate()
+    }
+
+    fun toggleVirtualCtrlLock() {
+        if (virtualCtrlLocked) {
+            virtualCtrlLocked = false
+            virtualCtrlActive = false
+        } else {
+            virtualCtrlLocked = true
+            virtualCtrlActive = true
+        }
+        invalidate()
+    }
+
+    fun clearVirtualCtrl() {
+        virtualCtrlLocked = false
+        virtualCtrlActive = false
+        invalidate()
+    }
+
+    private fun consumeVirtualCtrlIfNeeded() {
+        if (virtualCtrlActive && !virtualCtrlLocked) {
+            virtualCtrlActive = false
+            invalidate()
+        }
+    }
+
+    private fun ctrlModifierActive(): Boolean {
+        return ctrlPressed || virtualCtrlActive
+    }
+
+    private fun ctrlCharFor(text: CharSequence): String? {
+        if (text.length != 1) return null
+        val code = when (text[0].uppercaseChar()) {
+            '@' -> 0
+            'A' -> 1
+            'B' -> 2
+            'C' -> 3
+            'D' -> 4
+            'E' -> 5
+            'F' -> 6
+            'G' -> 7
+            'H' -> 8
+            'I' -> 9
+            'J' -> 10
+            'K' -> 11
+            'L' -> 12
+            'M' -> 13
+            'N' -> 14
+            'O' -> 15
+            'P' -> 16
+            'Q' -> 17
+            'R' -> 18
+            'S' -> 19
+            'T' -> 20
+            'U' -> 21
+            'V' -> 22
+            'W' -> 23
+            'X' -> 24
+            'Y' -> 25
+            'Z' -> 26
+            '[' -> 27
+            '\' -> 28
+            ']' -> 29
+            '^' -> 30
+            '_' -> 31
+            else -> return null
+        }
+        return code.toChar().toString()
     }
 
     private fun handleKeyEvent(event: KeyEvent): Boolean {
@@ -517,7 +606,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         val modifiers =
             (if (shiftPressed) 1 else 0) or
-            (if (ctrlPressed) 2 else 0) or
+            (if (ctrlModifierActive()) 2 else 0) or
             (if (altPressed) 4 else 0) or
             (if (metaPressed) 8 else 0)
 
@@ -542,6 +631,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
         }
 
+        if (virtualCtrlActive) {
+            consumeVirtualCtrlIfNeeded()
+        }
+
         requestRender()
         return true
     }
@@ -556,7 +649,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             else -> {
                 val modifiers =
                     (if (shiftPressed) 1 else 0) or
-                    (if (ctrlPressed) 2 else 0) or
+                    (if (ctrlModifierActive()) 2 else 0) or
                     (if (altPressed) 4 else 0) or
                     (if (metaPressed) 8 else 0)
                 currentSession?.sendKey(keyCode, modifiers, false)
