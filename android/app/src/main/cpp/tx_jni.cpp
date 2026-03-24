@@ -413,22 +413,88 @@ Java_com_tx_terminal_jni_NativeTerminal_sendKey(
     jboolean pressed
 ) {
     if (!pressed) return;  // Only handle key down for now
-    
+
     std::lock_guard<std::mutex> lock(instances_mutex);
     auto it = instances.find(handle);
     if (it == instances.end() || !it->second->terminal) {
         return;
     }
-    
+
     auto& terminal = it->second->terminal;
-    
-    // Convert Android key code to terminal key
+
+    auto modifier_param = [&]() -> int {
+        int mod_value = 1;
+        if (modifiers & 1) mod_value += 1;  // Shift
+        if (modifiers & 4) mod_value += 2;  // Alt
+        if (modifiers & 2) mod_value += 4;  // Ctrl
+        if (modifiers & 8) mod_value += 8;  // Meta
+        return mod_value;
+    };
+
+    auto csi_with_modifiers = [&](const char final_char) -> std::string {
+        const int mod_value = modifier_param();
+        if (mod_value == 1) {
+            return std::string("\x1b[") + final_char;
+        }
+        return std::string("\x1b[1;") + std::to_string(mod_value) + final_char;
+    };
+
+    auto tilde_with_modifiers = [&](int number) -> std::string {
+        const int mod_value = modifier_param();
+        if (mod_value == 1) {
+            return std::string("\x1b[") + std::to_string(number) + "~";
+        }
+        return std::string("\x1b[") + std::to_string(number) + ";" + std::to_string(mod_value) + "~";
+    };
+
+    std::string seq;
+
+    switch (key_code) {
+        case 61:   // KEYCODE_TAB
+            seq = "\t";
+            break;
+        case 111:  // KEYCODE_ESCAPE
+            seq = "\x1b";
+            break;
+        case 19:   // KEYCODE_DPAD_UP
+            seq = csi_with_modifiers('A');
+            break;
+        case 20:   // KEYCODE_DPAD_DOWN
+            seq = csi_with_modifiers('B');
+            break;
+        case 21:   // KEYCODE_DPAD_LEFT
+            seq = csi_with_modifiers('D');
+            break;
+        case 22:   // KEYCODE_DPAD_RIGHT
+            seq = csi_with_modifiers('C');
+            break;
+        case 122:  // KEYCODE_MOVE_HOME
+            seq = csi_with_modifiers('H');
+            break;
+        case 123:  // KEYCODE_MOVE_END
+            seq = csi_with_modifiers('F');
+            break;
+        case 92:   // KEYCODE_PAGE_UP
+            seq = tilde_with_modifiers(5);
+            break;
+        case 93:   // KEYCODE_PAGE_DOWN
+            seq = tilde_with_modifiers(6);
+            break;
+        default:
+            break;
+    }
+
+    if (!seq.empty()) {
+        terminal->sendText(seq);
+        return;
+    }
+
     int mods = 0;
     if (modifiers & 1) mods |= 1;  // Shift
     if (modifiers & 2) mods |= 2;  // Ctrl
     if (modifiers & 4) mods |= 4;  // Alt
     if (modifiers & 8) mods |= 8;  // Meta
-    
+
     terminal->onKey(key_code, mods, true);
 }
 
