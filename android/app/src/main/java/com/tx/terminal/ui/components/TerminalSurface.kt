@@ -659,7 +659,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
                             val maxScrollOffset = (totalRows - terminalRows).coerceAtLeast(0)
 
                             if (maxScrollOffset > 0) {
-                                touchScrollAccumY += (selectionStartY - event.y)
+                                touchScrollAccumY += (event.y - selectionStartY)
                                 val lineDelta = (touchScrollAccumY / cellHeight).toInt()
                                 if (lineDelta != 0) {
                                     scrollOffset = (scrollOffset + lineDelta).coerceIn(0, maxScrollOffset)
