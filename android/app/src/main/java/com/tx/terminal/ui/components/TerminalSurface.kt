@@ -392,28 +392,20 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
             val virtualRow = firstVisibleRow + row
             val line = visibleLines.getOrNull(row).orEmpty()
+            val selectedSpan = getSelectionSpanForRow(virtualRow)
+
+            if (selectedSpan != null) {
+                val spanStart = selectedSpan.first.coerceIn(0, terminalColumns - 1)
+                val spanEnd = selectedSpan.last.coerceIn(0, terminalColumns - 1)
+                val selLeft = horizontalPadding + (spanStart * cellWidth)
+                val selRight = horizontalPadding + ((spanEnd + 1) * cellWidth)
+                canvas.drawRect(selLeft, top, selRight, bottom, selectionPaint)
+            }
 
             for (col in 0 until terminalColumns) {
                 val left = horizontalPadding + (col * cellWidth)
-                val right = left + cellWidth
 
-                val isSelected = hasPersistentSelection &&
-                    (
-                        (selectionStartRow == selectionEndRow &&
-                            virtualRow == selectionStartRow &&
-                            col in selectionStartCol..selectionEndCol) ||
-                        (virtualRow == selectionStartRow &&
-                            virtualRow != selectionEndRow &&
-                            col >= selectionStartCol) ||
-                        (virtualRow == selectionEndRow &&
-                            virtualRow != selectionStartRow &&
-                            col <= selectionEndCol) ||
-                        (virtualRow > selectionStartRow && virtualRow < selectionEndRow)
-                    )
-
-                if (isSelected) {
-                    canvas.drawRect(left, top, right, bottom, selectionPaint)
-                }
+                val isSelected = selectedSpan?.let { col in it } == true
 
                 if (col < line.length) {
                     val ch = line[col].toString()
@@ -764,6 +756,22 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private fun screenToCell(x: Float, y: Float): Pair<Int, Int> {
         return screenToVirtualCell(x, y)
+    }
+
+    private fun getSelectionSpanForRow(row: Int): IntRange? {
+        if (!hasPersistentSelection) return null
+        if (row < selectionStartRow || row > selectionEndRow) return null
+
+        return when {
+            selectionStartRow == selectionEndRow ->
+                selectionStartCol..selectionEndCol
+            row == selectionStartRow ->
+                selectionStartCol..(terminalColumns - 1)
+            row == selectionEndRow ->
+                0..selectionEndCol
+            else ->
+                0..(terminalColumns - 1)
+        }
     }
 
     private fun normalizeSelection() {
