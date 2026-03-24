@@ -818,10 +818,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
         if (maxScrollOffset > 0) {
             when {
                 y < verticalPadding + edgeZone -> {
-                    scrollOffset = (scrollOffset - 1).coerceAtLeast(0)
+                    scrollOffset = (scrollOffset + 1).coerceAtMost(maxScrollOffset)
                 }
                 y > height - verticalPadding - edgeZone -> {
-                    scrollOffset = (scrollOffset + 1).coerceAtMost(maxScrollOffset)
+                    scrollOffset = (scrollOffset - 1).coerceAtLeast(0)
                 }
             }
         }
