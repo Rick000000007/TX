@@ -160,6 +160,9 @@ class TerminalSurfaceView(context: Context) : View(context) {
     private var longPressTriggered = false
     private var hasPersistentSelection = false
 
+    private var scrollOffset = 0
+    private var touchScrollAccumY = 0f
+
     private enum class SelectionHandle {
         NONE,
         START,
@@ -210,6 +213,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         currentSession?.onScreenUpdate = null
         currentSession = session
+        scrollOffset = 0
+        touchScrollAccumY = 0f
         currentSession?.onScreenUpdate = {
             postInvalidateOnAnimation()
         }
@@ -336,7 +341,17 @@ class TerminalSurfaceView(context: Context) : View(context) {
         canvas.drawColor(backgroundColorInt)
 
         val session = currentSession
-        val rowsToDraw = if (session != null) {
+        val historySize = if (session != null) {
+            try {
+                NativeTerminal.getHistorySize(session.getNativeHandle())
+            } catch (_: Exception) {
+                0
+            }
+        } else {
+            0
+        }
+
+        val screenRows = if (session != null) {
             try {
                 session.getScreenDimensions().second.coerceAtMost(terminalRows)
             } catch (_: Exception) {
@@ -346,14 +361,35 @@ class TerminalSurfaceView(context: Context) : View(context) {
             terminalRows
         }
 
-        for (row in 0 until rowsToDraw) {
+        val totalRows = historySize + screenRows
+        val maxScrollOffset = (totalRows - terminalRows).coerceAtLeast(0)
+        if (scrollOffset > maxScrollOffset) {
+            scrollOffset = maxScrollOffset
+        }
+
+        val firstVisibleRow = (totalRows - terminalRows - scrollOffset).coerceAtLeast(0)
+
+        for (row in 0 until terminalRows) {
             val top = verticalPadding + (row * cellHeight)
             val baselineY = top + baselineOffset
             val bottom = top + cellHeight
 
             if (top > height - verticalPadding) break
 
-            val line = session?.getRowText(row).orEmpty()
+            val virtualRow = firstVisibleRow + row
+            val line = if (session != null) {
+                try {
+                    if (virtualRow < historySize) {
+                        NativeTerminal.getHistoryRowText(session.getNativeHandle(), virtualRow)
+                    } else {
+                        session.getRowText(virtualRow - historySize)
+                    }
+                } catch (_: Exception) {
+                    ""
+                }
+            } else {
+                ""
+            }
 
             for (col in 0 until terminalColumns) {
                 val left = horizontalPadding + (col * cellWidth)
@@ -383,7 +419,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
         }
 
-        if (session != null) {
+        if (session != null && scrollOffset == 0) {
             try {
                 val rawCursorCol = NativeTerminal.getCursorCol(session.getNativeHandle())
                 val cursorRow = NativeTerminal.getCursorRow(session.getNativeHandle())
@@ -600,6 +636,40 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     return true
                 }
 
+                if (!longPressTriggered && activeHandle == SelectionHandle.NONE && !isSelecting) {
+                    val dy = event.y - selectionStartY
+                    if (kotlin.math.abs(dy) > cellHeight * 0.6f) {
+                        val session = currentSession
+                        if (session != null) {
+                            val historySize = try {
+                                NativeTerminal.getHistorySize(session.getNativeHandle())
+                            } catch (_: Exception) {
+                                0
+                            }
+                            val screenRows = try {
+                                session.getScreenDimensions().second.coerceAtMost(terminalRows)
+                            } catch (_: Exception) {
+                                terminalRows
+                            }
+                            val totalRows = historySize + screenRows
+                            val maxScrollOffset = (totalRows - terminalRows).coerceAtLeast(0)
+
+                            if (maxScrollOffset > 0) {
+                                touchScrollAccumY += (selectionStartY - event.y)
+                                val lineDelta = (touchScrollAccumY / cellHeight).toInt()
+                                if (lineDelta != 0) {
+                                    scrollOffset = (scrollOffset + lineDelta).coerceIn(0, maxScrollOffset)
+                                    touchScrollAccumY -= lineDelta * cellHeight
+                                    selectionStartY = event.y
+                                    invalidate()
+                                }
+                                longPressRunnable?.let { removeCallbacks(it) }
+                                return true
+                            }
+                        }
+                    }
+                }
+
                 val dx = kotlin.math.abs(event.x - selectionStartX)
                 val dy = kotlin.math.abs(event.y - selectionStartY)
                 if (!longPressTriggered && (dx > 16f || dy > 16f)) {
@@ -619,6 +689,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 longPressRunnable?.let { removeCallbacks(it) }
                 parent?.requestDisallowInterceptTouchEvent(false)
+                touchScrollAccumY = 0f
 
                 if (isSelecting || longPressTriggered || activeHandle != SelectionHandle.NONE) {
                     isSelecting = false
