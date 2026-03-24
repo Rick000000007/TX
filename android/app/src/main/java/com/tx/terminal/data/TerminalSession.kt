@@ -395,7 +395,7 @@ class TerminalSession(
      * Send EOF (Ctrl+D)
      */
     fun sendEOF() {
-        sendText("\u0004") // EOT (Ctrl+D)
+        sendChar(4) // EOT (Ctrl+D)
     }
     
     /**
