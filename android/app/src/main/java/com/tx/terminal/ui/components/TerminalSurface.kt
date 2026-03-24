@@ -813,7 +813,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
         val totalRows = historySize + screenRows
         val maxScrollOffset = (totalRows - terminalRows).coerceAtLeast(0)
 
-        val edgeZone = (cellHeight * 1.5f).coerceAtLeast(24f)
+        val edgeZone = (cellHeight * 0.35f).coerceAtLeast(6f)
 
         if (maxScrollOffset > 0) {
             when {
