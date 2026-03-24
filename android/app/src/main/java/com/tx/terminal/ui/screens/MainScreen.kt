@@ -37,6 +37,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = false,
         drawerContent = {
             ModalDrawerSheet {
                 Text(
