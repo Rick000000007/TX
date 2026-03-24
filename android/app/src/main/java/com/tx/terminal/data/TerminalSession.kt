@@ -41,7 +41,9 @@ class TerminalSession(
             context: Context,
             name: String = "Terminal",
             shellPath: String = "/system/bin/sh",
-            initialCommand: String? = null
+            initialCommand: String? = null,
+            columns: Int = 80,
+            rows: Int = 24
         ): TerminalSession {
             // Initialize terminal environment (creates directories and builds env vars)
             val envConfig = TerminalEnvironment.initialize(context)
@@ -51,6 +53,8 @@ class TerminalSession(
                 name = name,
                 shellPath = shellPath,
                 initialCommand = initialCommand,
+                columns = columns,
+                rows = rows,
                 environmentConfig = envConfig
             )
         }
@@ -414,13 +418,17 @@ class SessionManager {
     fun createSession(
         name: String = "Terminal",
         shellPath: String = "/system/bin/sh",
-        initialCommand: String? = null
+        initialCommand: String? = null,
+        columns: Int = 80,
+        rows: Int = 24
     ): TerminalSession? {
         val session = TerminalSession.createWithEnvironment(
             context = TXApplication.instance,
             name = name,
             shellPath = shellPath,
-            initialCommand = initialCommand
+            initialCommand = initialCommand,
+            columns = columns,
+            rows = rows
         )
         
         // Initialize the session first

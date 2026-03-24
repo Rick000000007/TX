@@ -254,6 +254,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     terminalColumns = newColumns
     terminalRows = newRows
+    viewModel?.updateTerminalSize(newColumns, newRows)
     cellWidth = measuredCellWidth
     cellHeight = measuredCellHeight
     baselineOffset = -fm.ascent

@@ -41,6 +41,12 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
     val activeSession: TerminalSession?
         get() = sessionManager.activeSession
 
+    private val _terminalColumns = MutableStateFlow(80)
+    val terminalColumns: StateFlow<Int> = _terminalColumns.asStateFlow()
+
+    private val _terminalRows = MutableStateFlow(24)
+    val terminalRows: StateFlow<Int> = _terminalRows.asStateFlow()
+
     // UI state
     private val _showExtraKeys = MutableStateFlow(true)
     val showExtraKeys: StateFlow<Boolean> = _showExtraKeys.asStateFlow()
@@ -97,7 +103,12 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
      */
     fun createSession(name: String = "Terminal"): TerminalSession? {
         val shellPath = preferences.getShellPathSync()
-        return sessionManager.createSession(name, shellPath)
+        return sessionManager.createSession(
+            name = name,
+            shellPath = shellPath,
+            columns = _terminalColumns.value,
+            rows = _terminalRows.value
+        )
     }
 
     /**
@@ -242,6 +253,11 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
      */
     fun resetFontSize() {
         setFontSize(TerminalPreferences.Defaults.FONT_SIZE)
+    }
+
+    fun updateTerminalSize(columns: Int, rows: Int) {
+        _terminalColumns.value = columns
+        _terminalRows.value = rows
     }
 
     /**
