@@ -472,7 +472,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
         return object : BaseInputConnection(this, true) {
             override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
                 if (!text.isNullOrEmpty()) {
-                    val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
+            val ctrlText =
+                if (ctrlPressed || virtualCtrlActive)
+                    ctrlCharFor(unicode.toChar().toString())
+                else null
                     if (ctrlText != null) {
                         currentSession?.sendText(ctrlText)
                         consumeVirtualCtrlIfNeeded()
@@ -604,9 +607,11 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
         }
 
+        val isCtrl = ctrlPressed || virtualCtrlActive
+
         val modifiers =
             (if (shiftPressed) 1 else 0) or
-            (if (ctrlModifierActive()) 2 else 0) or
+            (if (isCtrl) 2 else 0) or
             (if (altPressed) 4 else 0) or
             (if (metaPressed) 8 else 0)
 
@@ -647,11 +652,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             KeyEvent.KEYCODE_META_LEFT, KeyEvent.KEYCODE_META_RIGHT -> metaPressed = false
 
             else -> {
-                val modifiers =
-                    (if (shiftPressed) 1 else 0) or
-                    (if (ctrlModifierActive()) 2 else 0) or
-                    (if (altPressed) 4 else 0) or
-                    (if (metaPressed) 8 else 0)
+            (if (metaPressed) 8 else 0)
                 currentSession?.sendKey(keyCode, modifiers, false)
             }
         }
