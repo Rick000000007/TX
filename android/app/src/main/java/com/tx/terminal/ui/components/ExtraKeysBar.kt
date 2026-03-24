@@ -1,7 +1,9 @@
 package com.tx.terminal.ui.components
 
 import android.view.KeyEvent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,11 +16,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.awaitEachGesture
-import androidx.compose.ui.input.pointer.awaitFirstDown
-import androidx.compose.ui.input.pointer.waitForUpOrCancellation
-import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -184,6 +181,7 @@ private fun ExtraKeyButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CtrlKeyButton(
     isActive: Boolean,
@@ -193,20 +191,10 @@ private fun CtrlKeyButton(
     Surface(
         modifier = Modifier
             .height(36.dp)
-            .pointerInput(isActive) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    val up = withTimeoutOrNull(2000L) {
-                        waitForUpOrCancellation()
-                    }
-                    if (up == null) {
-                        onLongHold()
-                        waitForUpOrCancellation()
-                    } else {
-                        onTap()
-                    }
-                }
-            },
+            .combinedClickable(
+                onClick = onTap,
+                onLongClick = onLongHold
+            ),
         shape = MaterialTheme.shapes.small,
         color = if (isActive) {
             MaterialTheme.colorScheme.primaryContainer
