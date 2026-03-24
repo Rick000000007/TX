@@ -231,7 +231,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
         backgroundColorInt = bg
         foregroundColorInt = fg
         paint.color = fg
-        selectedTextPaint.color = fg
+        selectedTextPaint.color = android.graphics.Color.BLACK
         setBackgroundColor(bg)
         requestRender()
     }
