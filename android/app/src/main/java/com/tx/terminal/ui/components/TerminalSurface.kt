@@ -572,7 +572,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             'Y' -> 25
             'Z' -> 26
             '[' -> 27
-            '\' -> 28
+            '\\' -> 28
             ']' -> 29
             '^' -> 30
             '_' -> 31

@@ -1,6 +1,7 @@
 package com.tx.terminal.ui.components
 
 import android.view.KeyEvent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -229,6 +230,7 @@ private fun ExtraKeyButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ExtraKeyToggleButton(
     text: String,
