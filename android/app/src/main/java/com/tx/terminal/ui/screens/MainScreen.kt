@@ -30,6 +30,8 @@ fun MainScreen(viewModel: TerminalViewModel) {
     
     var showSettingsDialog by remember { mutableStateOf(false) }
     var terminalSurfaceView by remember { mutableStateOf<TerminalSurfaceView?>(null) }
+    var ctrlActive by remember { mutableStateOf(false) }
+    var ctrlLocked by remember { mutableStateOf(false) }
     
     val sessions by viewModel.sessions.collectAsState()
     val activeSessionId by viewModel.activeSessionId.collectAsState()
@@ -213,7 +215,11 @@ fun MainScreen(viewModel: TerminalViewModel) {
                     TerminalSurface(
                         viewModel = viewModel,
                         modifier = Modifier.fillMaxSize(),
-                        onViewReady = { terminalSurfaceView = it }
+                        onViewReady = { terminalSurfaceView = it },
+                        onVirtualCtrlStateChanged = { active, locked ->
+                            ctrlActive = active
+                            ctrlLocked = locked
+                        }
                     )
                 }
                 
@@ -231,8 +237,10 @@ fun MainScreen(viewModel: TerminalViewModel) {
                         onCtrlZ = { viewModel.sendText("\u001a") }, // SUB (Ctrl+Z)
                         onCopy = { viewModel.copyToClipboard() },
                         onPaste = { viewModel.pasteFromClipboard() },
-                        onCtrlTap = { terminalSurfaceView?.activateVirtualCtrl(false) },
-                        onCtrlLongPress = { terminalSurfaceView?.toggleVirtualCtrlLock() }
+                        onCtrlTap = { terminalSurfaceView?.toggleVirtualCtrlOneShot() },
+                        onCtrlLongPress = { terminalSurfaceView?.lockVirtualCtrl() },
+                        ctrlActive = ctrlActive,
+                        ctrlLocked = ctrlLocked
                     )
                 }
             }

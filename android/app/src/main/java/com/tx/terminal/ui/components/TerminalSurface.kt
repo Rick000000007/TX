@@ -47,7 +47,8 @@ import kotlin.math.floor
 fun TerminalSurface(
     viewModel: TerminalViewModel,
     modifier: Modifier = Modifier,
-    onViewReady: (TerminalSurfaceView) -> Unit = {}
+    onViewReady: (TerminalSurfaceView) -> Unit = {},
+    onVirtualCtrlStateChanged: (Boolean, Boolean) -> Unit = { _, _ -> }
 ) {
     val activeSessionId by viewModel.activeSessionId.collectAsState()
     val sessions by viewModel.sessions.collectAsState()
@@ -159,6 +160,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
     private var virtualCtrlActive = false
     private var virtualCtrlLocked = false
+    private var onVirtualCtrlStateChanged: (Boolean, Boolean) -> Unit = { _, _ -> }
 
     private var selectionStartX = 0f
     private var selectionStartY = 0f
@@ -475,6 +477,9 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
                     if (ctrlText != null) {
                         currentSession?.sendText(ctrlText)
+                        if (virtualCtrlActive && !virtualCtrlLocked) {
+                            
+                        }
                     } else {
                         currentSession?.sendText(text.toString())
                     }
@@ -503,6 +508,15 @@ class TerminalSurfaceView(context: Context) : View(context) {
         }
     }
 
+    fun setOnVirtualCtrlStateChangedListener(listener: (Boolean, Boolean) -> Unit) {
+        onVirtualCtrlStateChanged = listener
+        notifyVirtualCtrlState()
+    }
+
+    private fun notifyVirtualCtrlState() {
+        onVirtualCtrlStateChanged(virtualCtrlActive, virtualCtrlLocked)
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         return handleKeyEvent(event)
     }
@@ -511,6 +525,25 @@ class TerminalSurfaceView(context: Context) : View(context) {
         virtualCtrlLocked = lock
         virtualCtrlActive = true
         invalidate()
+        notifyVirtualCtrlState()
+    }
+
+    fun toggleVirtualCtrlOneShot() {
+        if (virtualCtrlLocked) {
+            virtualCtrlLocked = false
+            virtualCtrlActive = false
+        } else {
+            virtualCtrlActive = !virtualCtrlActive
+        }
+        invalidate()
+        notifyVirtualCtrlState()
+    }
+
+    fun lockVirtualCtrl() {
+        virtualCtrlLocked = true
+        virtualCtrlActive = true
+        invalidate()
+        notifyVirtualCtrlState()
     }
 
     fun toggleVirtualCtrlLock() {
@@ -522,18 +555,21 @@ class TerminalSurfaceView(context: Context) : View(context) {
             virtualCtrlActive = true
         }
         invalidate()
+        notifyVirtualCtrlState()
     }
 
     fun clearVirtualCtrl() {
         virtualCtrlLocked = false
         virtualCtrlActive = false
         invalidate()
+        notifyVirtualCtrlState()
     }
 
     private fun consumeVirtualCtrlIfNeeded() {
         if (virtualCtrlActive && !virtualCtrlLocked) {
             virtualCtrlActive = false
             invalidate()
+            notifyVirtualCtrlState()
         }
     }
 
@@ -620,6 +656,9 @@ class TerminalSurfaceView(context: Context) : View(context) {
             KeyEvent.KEYCODE_DPAD_DOWN,
             KeyEvent.KEYCODE_DPAD_LEFT,
             KeyEvent.KEYCODE_DPAD_RIGHT -> currentSession?.sendKey(event.keyCode, modifiers, true)
+                        if (virtualCtrlActive && !virtualCtrlLocked) {
+                            
+                        }
 
             else -> {
                 val unicode = event.unicodeChar
@@ -627,11 +666,20 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     val ctrlText = if (ctrlModifierActive()) ctrlCharFor(unicode.toChar().toString()) else null
                     if (ctrlText != null) {
                         currentSession?.sendText(ctrlText)
+                        if (virtualCtrlActive && !virtualCtrlLocked) {
+                            
+                        }
                     } else {
                         currentSession?.sendChar(unicode)
+                        if (virtualCtrlActive && !virtualCtrlLocked) {
+                            
+                        }
                     }
                 } else {
                     currentSession?.sendKey(event.keyCode, modifiers, true)
+                        if (virtualCtrlActive && !virtualCtrlLocked) {
+                            
+                        }
                 }
             }
         }

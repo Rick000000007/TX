@@ -31,28 +31,20 @@ fun ExtraKeysBar(
     onCopy: () -> Unit,
     onPaste: () -> Unit,
     onCtrlTap: () -> Unit,
-    onCtrlLongPress: () -> Unit
+    onCtrlLongPress: () -> Unit,
+    ctrlActive: Boolean,
+    ctrlLocked: Boolean
 ) {
     val scrollState = rememberScrollState()
-    var ctrlVisualActive by remember { mutableStateOf(false) }
-    var ctrlVisualLocked by remember { mutableStateOf(false) }
 
-    fun consumeCtrlAfterExtraKey() {
-        if (ctrlVisualActive && !ctrlVisualLocked) {
-            ctrlVisualActive = false
-        }
-    }
-
-    fun sendKeyDirect(keyCode: Int, keepCtrl: Boolean = false) {
-        val modifiers = if (ctrlVisualActive) 2 else 0
+    fun sendKeyDirect(keyCode: Int) {
+        val modifiers = if (ctrlActive) 2 else 0
         onKeyPressed(keyCode, modifiers, true)
         onKeyPressed(keyCode, modifiers, false)
-        if (!keepCtrl) consumeCtrlAfterExtraKey()
     }
 
-    fun sendTextDirect(text: String, keepCtrl: Boolean = false) {
+    fun sendTextDirect(text: String) {
         onSendText(text)
-        if (!keepCtrl) consumeCtrlAfterExtraKey()
     }
 
     Surface(
@@ -68,24 +60,11 @@ fun ExtraKeysBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             CtrlKeyButton(
-                isActive = ctrlVisualActive,
+                isActive = ctrlActive,
                 onTap = {
-                    if (ctrlVisualLocked) {
-                        ctrlVisualLocked = false
-                        ctrlVisualActive = false
-                        onCtrlLongPress()
-                    } else if (ctrlVisualActive) {
-                        ctrlVisualActive = false
-                        onCtrlLongPress()
-                    } else {
-                        ctrlVisualLocked = false
-                        ctrlVisualActive = true
-                        onCtrlTap()
-                    }
+                    onCtrlTap()
                 },
                 onLongHold = {
-                    ctrlVisualLocked = true
-                    ctrlVisualActive = true
                     onCtrlLongPress()
                 }
             )
@@ -148,7 +127,6 @@ fun ExtraKeysBar(
                 contentDescription = "Copy",
                 onClick = {
                     onCopy()
-                    consumeCtrlAfterExtraKey()
                 }
             )
             ExtraKeyIcon(
@@ -156,7 +134,6 @@ fun ExtraKeysBar(
                 contentDescription = "Paste",
                 onClick = {
                     onPaste()
-                    consumeCtrlAfterExtraKey()
                 }
             )
         }
