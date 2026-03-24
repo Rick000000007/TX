@@ -628,6 +628,87 @@ Java_com_tx_terminal_jni_NativeTerminal_getHistoryRowText(
     return env->NewStringUTF(content.c_str());
 }
 
+JNIEXPORT jobjectArray JNICALL
+Java_com_tx_terminal_jni_NativeTerminal_getVisibleRowsText(
+    JNIEnv* env,
+    jclass clazz,
+    jlong handle,
+    jint firstVisibleRow,
+    jint rowCount
+) {
+    std::lock_guard<std::mutex> lock(instances_mutex);
+    auto it = instances.find(handle);
+    if (it == instances.end() || !it->second->terminal || rowCount <= 0) {
+        jclass stringClass = env->FindClass("java/lang/String");
+        return env->NewObjectArray(0, stringClass, env->NewStringUTF(""));
+    }
+
+    const auto& screen = it->second->terminal->getScreen();
+    const auto& history = screen.getHistory();
+    const int historySize = static_cast<int>(history.size());
+    const int screenRows = screen.rows();
+    const int totalRows = historySize + screenRows;
+
+    int startRow = std::max(0, static_cast<int>(firstVisibleRow));
+    int count = std::max(0, static_cast<int>(rowCount));
+    if (startRow > totalRows) startRow = totalRows;
+    if (startRow + count > totalRows) count = totalRows - startRow;
+
+    jclass stringClass = env->FindClass("java/lang/String");
+    jobjectArray result = env->NewObjectArray(count, stringClass, env->NewStringUTF(""));
+
+    auto append_utf8 = [](std::string& content, char32_t cp) {
+        if (cp < 0x80) {
+            content += static_cast<char>(cp);
+        } else if (cp < 0x800) {
+            content += static_cast<char>(0xC0 | (cp >> 6));
+            content += static_cast<char>(0x80 | (cp & 0x3F));
+        } else if (cp < 0x10000) {
+            content += static_cast<char>(0xE0 | (cp >> 12));
+            content += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+            content += static_cast<char>(0x80 | (cp & 0x3F));
+        } else {
+            content += static_cast<char>(0xF0 | (cp >> 18));
+            content += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+            content += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+            content += static_cast<char>(0x80 | (cp & 0x3F));
+        }
+    };
+
+    for (int i = 0; i < count; ++i) {
+        int virtualRow = startRow + i;
+        std::string content;
+        content.reserve(screen.cols());
+
+        if (virtualRow < historySize) {
+            const auto& line = history[virtualRow].cells;
+            for (int col = 0; col < screen.cols(); ++col) {
+                if (col < static_cast<int>(line.size()) && !line[col].empty()) {
+                    append_utf8(content, line[col].codepoint);
+                } else {
+                    content += ' ';
+                }
+            }
+        } else {
+            int row = virtualRow - historySize;
+            const auto* line = screen.getRow(row);
+            if (line != nullptr) {
+                for (int col = 0; col < screen.cols(); ++col) {
+                    if (!line[col].empty()) {
+                        append_utf8(content, line[col].codepoint);
+                    } else {
+                        content += ' ';
+                    }
+                }
+            }
+        }
+
+        env->SetObjectArrayElement(result, i, env->NewStringUTF(content.c_str()));
+    }
+
+    return result;
+}
+
 JNIEXPORT jint JNICALL
 Java_com_tx_terminal_jni_NativeTerminal_getColumns(
     JNIEnv* env,

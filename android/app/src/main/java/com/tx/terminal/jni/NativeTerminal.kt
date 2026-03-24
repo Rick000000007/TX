@@ -122,6 +122,9 @@ object NativeTerminal {
 
     @JvmStatic
     external fun getHistoryRowText(handle: Long, row: Int): String
+
+    @JvmStatic
+    external fun getVisibleRowsText(handle: Long, firstVisibleRow: Int, rowCount: Int): Array<String>
     
     /**
      * Get number of columns

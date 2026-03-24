@@ -369,6 +369,20 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
         val firstVisibleRow = (totalRows - terminalRows - scrollOffset).coerceAtLeast(0)
 
+        val visibleLines = if (session != null) {
+            try {
+                NativeTerminal.getVisibleRowsText(
+                    session.getNativeHandle(),
+                    firstVisibleRow,
+                    terminalRows
+                )
+            } catch (_: Exception) {
+                emptyArray()
+            }
+        } else {
+            emptyArray()
+        }
+
         for (row in 0 until terminalRows) {
             val top = verticalPadding + (row * cellHeight)
             val baselineY = top + baselineOffset
@@ -377,19 +391,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             if (top > height - verticalPadding) break
 
             val virtualRow = firstVisibleRow + row
-            val line = if (session != null) {
-                try {
-                    if (virtualRow < historySize) {
-                        NativeTerminal.getHistoryRowText(session.getNativeHandle(), virtualRow)
-                    } else {
-                        session.getRowText(virtualRow - historySize)
-                    }
-                } catch (_: Exception) {
-                    ""
-                }
-            } else {
-                ""
-            }
+            val line = visibleLines.getOrNull(row).orEmpty()
 
             for (col in 0 until terminalColumns) {
                 val left = horizontalPadding + (col * cellWidth)
