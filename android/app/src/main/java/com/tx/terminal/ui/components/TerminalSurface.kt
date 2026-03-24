@@ -395,15 +395,19 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 val left = horizontalPadding + (col * cellWidth)
                 val right = left + cellWidth
 
-                val isSelected = if (session != null) {
-                    try {
-                        NativeTerminal.isCellSelected(session.getNativeHandle(), col, virtualRow)
-                    } catch (_: Exception) {
-                        false
-                    }
-                } else {
-                    false
-                }
+                val isSelected = hasPersistentSelection &&
+                    (
+                        (selectionStartRow == selectionEndRow &&
+                            virtualRow == selectionStartRow &&
+                            col in selectionStartCol..selectionEndCol) ||
+                        (virtualRow == selectionStartRow &&
+                            virtualRow != selectionEndRow &&
+                            col >= selectionStartCol) ||
+                        (virtualRow == selectionEndRow &&
+                            virtualRow != selectionStartRow &&
+                            col <= selectionEndCol) ||
+                        (virtualRow > selectionStartRow && virtualRow < selectionEndRow)
+                    )
 
                 if (isSelected) {
                     canvas.drawRect(left, top, right, bottom, selectionPaint)
