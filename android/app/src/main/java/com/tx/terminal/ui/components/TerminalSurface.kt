@@ -192,19 +192,12 @@ class TerminalSurfaceView(context: Context) : View(context) {
             postInvalidateOnAnimation()
         }
 
-        requestLayout()
-        invalidate()
-        requestFocus()
-        requestFocusFromTouch()
-
-        post {
-            requestLayout()
-            invalidate()
-            requestRender()
-            requestFocus()
-            requestFocusFromTouch()
-            showKeyboard()
+        if (width > 0 && height > 0) {
+            applyTerminalSize()
         }
+
+        invalidate()
+        requestRender()
     }
 
     fun updateColors(bg: Int, fg: Int) {
