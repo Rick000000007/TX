@@ -96,7 +96,7 @@ fun ExtraKeysBar(
             )
             ExtraKeyButton(
                 text = "TAB",
-                onClick = { sendTextDirect("\t", keepCtrl = true) }
+                onClick = { sendTextDirect("\t") }
             )
 
             VerticalSeparator(modifier = Modifier.height(24.dp))

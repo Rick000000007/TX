@@ -475,12 +475,12 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
                     if (ctrlText != null) {
                         currentSession?.sendText(ctrlText)
-                        consumeVirtualCtrlIfNeeded()
                     } else {
                         currentSession?.sendText(text.toString())
-                        if (ctrlModifierActive()) {
-                            consumeVirtualCtrlIfNeeded()
-                        }
+                    }
+
+                    if (virtualCtrlActive && !virtualCtrlLocked) {
+                        consumeVirtualCtrlIfNeeded()
                     }
                 }
                 return true
@@ -636,7 +636,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
         }
 
-        if (virtualCtrlActive) {
+        if (virtualCtrlActive && !virtualCtrlLocked) {
             consumeVirtualCtrlIfNeeded()
         }
 
