@@ -20,9 +20,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
@@ -34,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 
@@ -53,13 +56,22 @@ fun TerminalSurface(
 
     val activeSession = sessions.find { it.id == activeSessionId }
 
+    val terminalViewHolder = remember { arrayOfNulls<TerminalSurfaceView>(1) }
+
     Box(
         modifier = modifier.background(Color(backgroundColor))
     ) {
+        LaunchedEffect(viewModel, activeSessionId) {
+            viewModel.clearSelectionEvent.collectLatest {
+                terminalViewHolder[0]?.clearSelectionFromUi()
+            }
+        }
+
         key(activeSessionId) {
             AndroidView(
                 factory = { ctx ->
                     TerminalSurfaceView(ctx).apply {
+                        terminalViewHolder[0] = this
                         this.viewModel = viewModel
                         updateColors(backgroundColor, foregroundColor)
                         updateFontSize(fontSize)
@@ -67,6 +79,7 @@ fun TerminalSurface(
                     }
                 },
                 update = { view ->
+                    terminalViewHolder[0] = view
                     view.viewModel = viewModel
                     view.updateColors(backgroundColor, foregroundColor)
                     view.updateFontSize(fontSize)
@@ -79,6 +92,12 @@ fun TerminalSurface(
 }
 
 class TerminalSurfaceView(context: Context) : View(context) {
+
+    fun clearSelectionFromUi() {
+        clearPersistentSelection()
+        invalidate()
+        requestRender()
+    }
 
     var viewModel: TerminalViewModel? = null
     private var currentSession: TerminalSession? = null
@@ -718,6 +737,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
             }
         }
         hasPersistentSelection = false
+        isSelecting = false
+        longPressTriggered = false
         activeHandle = SelectionHandle.NONE
     }
 

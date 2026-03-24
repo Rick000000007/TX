@@ -70,6 +70,9 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
     private val _errorMessage = MutableSharedFlow<String>()
     val errorMessage: SharedFlow<String> = _errorMessage.asSharedFlow()
 
+    private val _clearSelectionEvent = MutableSharedFlow<Unit>()
+    val clearSelectionEvent: SharedFlow<Unit> = _clearSelectionEvent.asSharedFlow()
+
     init {
         Log.d(TAG, "TerminalViewModel initialized")
 
@@ -191,6 +194,10 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
                 Context.CLIPBOARD_SERVICE
             ) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("Terminal", text))
+            clearActiveSelection()
+            viewModelScope.launch {
+                _clearSelectionEvent.emit(Unit)
+            }
         }
         return text
     }
