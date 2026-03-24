@@ -116,13 +116,13 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = android.graphics.Color.argb(110, 70, 130, 255)
+        color = android.graphics.Color.WHITE
         style = Paint.Style.FILL
     }
 
     private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.MONOSPACE
-        color = foregroundColorInt
+        color = android.graphics.Color.BLACK
         textSize = fontSizeSp
     }
 
@@ -399,7 +399,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 val spanEnd = selectedSpan.last.coerceIn(0, terminalColumns - 1)
                 val selLeft = horizontalPadding + (spanStart * cellWidth)
                 val selRight = horizontalPadding + ((spanEnd + 1) * cellWidth)
-                canvas.drawRect(selLeft, top, selRight, bottom, selectionPaint)
+                val overlap = 1f
+                canvas.drawRect(selLeft, top - overlap, selRight, bottom + overlap, selectionPaint)
             }
 
             for (col in 0 until terminalColumns) {
