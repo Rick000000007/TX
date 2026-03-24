@@ -477,19 +477,12 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
                     if (ctrlText != null) {
                         currentSession?.sendText(ctrlText)
-                        if (virtualCtrlActive && !virtualCtrlLocked) {
-                            
-                        }
+                        
                     } else {
                         currentSession?.sendText(text.toString())
                     }
 
-                    if (virtualCtrlActive && !virtualCtrlLocked) {
-                        consumeVirtualCtrlIfNeeded()
-                    }
-                }
-                return true
-            }
+                    consumeVirtualCtrlIfNeeded()
 
             override fun sendKeyEvent(event: KeyEvent): Boolean {
                 if (event.action == KeyEvent.ACTION_DOWN) {
@@ -569,15 +562,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
         if (virtualCtrlActive && !virtualCtrlLocked) {
             virtualCtrlActive = false
             invalidate()
-            notifyVirtualCtrlState()
         }
     }
-
-    private fun ctrlModifierActive(): Boolean {
-        return ctrlPressed || virtualCtrlActive
-    }
-
-    private fun ctrlCharFor(text: CharSequence): String? {
         if (text.length != 1) return null
         val code = when (text[0].uppercaseChar()) {
             '@' -> 0
@@ -655,10 +641,10 @@ class TerminalSurfaceView(context: Context) : View(context) {
             KeyEvent.KEYCODE_DPAD_UP,
             KeyEvent.KEYCODE_DPAD_DOWN,
             KeyEvent.KEYCODE_DPAD_LEFT,
-            KeyEvent.KEYCODE_DPAD_RIGHT -> currentSession?.sendKey(event.keyCode, modifiers, true)
-                        if (virtualCtrlActive && !virtualCtrlLocked) {
-                            
-                        }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                currentSession?.sendKey(event.keyCode, modifiers, true)
+            }
+                        
 
             else -> {
                 val unicode = event.unicodeChar
@@ -666,38 +652,19 @@ class TerminalSurfaceView(context: Context) : View(context) {
                     val ctrlText = if (ctrlModifierActive()) ctrlCharFor(unicode.toChar().toString()) else null
                     if (ctrlText != null) {
                         currentSession?.sendText(ctrlText)
-                        if (virtualCtrlActive && !virtualCtrlLocked) {
-                            
-                        }
+                        
                     } else {
                         currentSession?.sendChar(unicode)
-                        if (virtualCtrlActive && !virtualCtrlLocked) {
-                            
-                        }
+                        
                     }
                 } else {
                     currentSession?.sendKey(event.keyCode, modifiers, true)
-                        if (virtualCtrlActive && !virtualCtrlLocked) {
-                            
-                        }
+                        
                 }
             }
         }
 
-        if (virtualCtrlActive && !virtualCtrlLocked) {
-            consumeVirtualCtrlIfNeeded()
-        }
-
-        requestRender()
-        return true
-    }
-
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        when (keyCode) {
-            KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.KEYCODE_CTRL_RIGHT -> ctrlPressed = false
-            KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> altPressed = false
-            KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT -> shiftPressed = false
-            KeyEvent.KEYCODE_META_LEFT, KeyEvent.KEYCODE_META_RIGHT -> metaPressed = false
+        consumeVirtualCtrlIfNeeded()
 
             else -> {
                 val modifiers =
