@@ -418,9 +418,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
                 if (col < line.length) {
                     val ch = line[col].toString()
                     val textPaint = if (isSelected) selectedTextPaint else paint
-                    val charWidth = textPaint.measureText(ch)
-                    val charX = left + ((cellWidth - charWidth) * 0.5f)
-                    canvas.drawText(ch, charX, baselineY, textPaint)
+                    canvas.drawText(ch, left + cellWidth * 0.08f, baselineY, textPaint)
                 }
             }
         }
