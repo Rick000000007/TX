@@ -100,7 +100,8 @@ class TerminalSurfaceView(context: Context) : View(context) {
     fun clearSelectionFromUi() {
         clearPersistentSelection()
         invalidate()
-        requestRender()
+
+requestRender()
     }
 
     var viewModel: TerminalViewModel? = null
@@ -473,23 +474,18 @@ class TerminalSurfaceView(context: Context) : View(context) {
             EditorInfo.IME_ACTION_NONE
         return object : BaseInputConnection(this, true) {
             override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
-                if (!text.isNullOrEmpty()) {
-                    val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
-                    if (ctrlText != null) {
-                        currentSession?.sendText(ctrlText)
-                        
-                    } else {
-                        currentSession?.sendText(text.toString())
-                    }
+    if (!text.isNullOrEmpty()) {
+        val ctrlText = if (ctrlModifierActive()) ctrlCharFor(text) else null
+        if (ctrlText != null) {
+            currentSession?.sendText(ctrlText)
+        } else {
+            currentSession?.sendText(text.toString())
+        }
 
-                    consumeVirtualCtrlIfNeeded()
-
-            override fun sendKeyEvent(event: KeyEvent): Boolean {
-                if (event.action == KeyEvent.ACTION_DOWN) {
-                    handleKeyEvent(event)
-                }
-                return true
-            }
+        consumeVirtualCtrlIfNeeded()
+    }
+    return true
+}
 
             override fun deleteSurroundingText(
                 beforeLength: Int,
