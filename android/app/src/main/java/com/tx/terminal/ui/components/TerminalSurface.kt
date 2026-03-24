@@ -584,6 +584,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
         return code.toChar().toString()
     }
 
+    
     private fun handleKeyEvent(event: KeyEvent): Boolean {
         when (event.keyCode) {
             KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.KEYCODE_CTRL_RIGHT -> {
@@ -613,6 +614,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
             (if (shiftPressed) 1 else 0) or
             (if (isCtrl) 2 else 0) or
             (if (altPressed) 4 else 0) or
+            (if (metaPressed) 8 else 0)
 
         when (event.keyCode) {
             KeyEvent.KEYCODE_ENTER -> currentSession?.sendText("\n")
@@ -623,27 +625,36 @@ class TerminalSurfaceView(context: Context) : View(context) {
             KeyEvent.KEYCODE_DPAD_UP,
             KeyEvent.KEYCODE_DPAD_DOWN,
             KeyEvent.KEYCODE_DPAD_LEFT,
-            KeyEvent.KEYCODE_DPAD_RIGHT -> currentSession?.sendKey(event.keyCode, modifiers, true)
+            KeyEvent.KEYCODE_DPAD_RIGHT ->
+                currentSession?.sendKey(event.keyCode, modifiers, true)
 
             else -> {
                 val unicode = event.unicodeChar
                 if (unicode != 0) {
-                    currentSession?.sendChar(unicode)
+                    val ctrlText =
+                        if (isCtrl)
+                            ctrlCharFor(unicode.toChar().toString())
+                        else null
+
+                    if (ctrlText != null) {
+                        currentSession?.sendText(ctrlText)
+                    } else {
+                        currentSession?.sendChar(unicode)
+                    }
                 } else {
                     currentSession?.sendKey(event.keyCode, modifiers, true)
                 }
             }
         }
 
-        if (virtualCtrlActive) {
+        if (virtualCtrlActive && !virtualCtrlLocked) {
             consumeVirtualCtrlIfNeeded()
         }
 
         requestRender()
         return true
     }
-
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.KEYCODE_CTRL_RIGHT -> ctrlPressed = false
             KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> altPressed = false
