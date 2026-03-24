@@ -202,16 +202,6 @@ fun MainScreen(viewModel: TerminalViewModel) {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // Tab bar
-                if (sessions.size > 1) {
-                    TabBar(
-                        sessions = sessions,
-                        activeSessionId = activeSessionId,
-                        onSessionSelected = { viewModel.switchToSession(it) },
-                        onSessionClosed = { viewModel.closeSession(it) }
-                    )
-                }
-                
                 // Terminal view
                 Box(
                     modifier = Modifier
