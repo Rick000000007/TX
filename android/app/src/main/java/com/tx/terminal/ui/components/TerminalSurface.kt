@@ -397,7 +397,7 @@ class TerminalSurfaceView(context: Context) : View(context) {
 
                 val isSelected = if (session != null) {
                     try {
-                        NativeTerminal.isCellSelected(session.getNativeHandle(), col, row)
+                        NativeTerminal.isCellSelected(session.getNativeHandle(), col, virtualRow)
                     } catch (_: Exception) {
                         false
                     }
@@ -442,12 +442,16 @@ class TerminalSurfaceView(context: Context) : View(context) {
         if (hasPersistentSelection) {
             val handleRadius = (cellHeight * 0.22f).coerceAtLeast(10f)
 
+            val firstVisibleRow = getFirstVisibleRow()
+            val startVisibleRow = selectionStartRow - firstVisibleRow
+            val endVisibleRow = selectionEndRow - firstVisibleRow
+
             val startCx = horizontalPadding + (selectionStartCol * cellWidth)
-            val startCy = verticalPadding + (selectionStartRow * cellHeight) + cellHeight
+            val startCy = verticalPadding + (startVisibleRow * cellHeight) + cellHeight
             canvas.drawCircle(startCx, startCy, handleRadius, selectionHandlePaint)
 
             val endCx = horizontalPadding + ((selectionEndCol + 1) * cellWidth)
-            val endCy = verticalPadding + (selectionEndRow * cellHeight) + cellHeight
+            val endCy = verticalPadding + (endVisibleRow * cellHeight) + cellHeight
             canvas.drawCircle(endCx, endCy, handleRadius, selectionHandlePaint)
         }
     }
@@ -715,13 +719,47 @@ class TerminalSurfaceView(context: Context) : View(context) {
         Toast.makeText(context, "Selection mode - drag to select", Toast.LENGTH_SHORT).show()
     }
 
-    private fun screenToCell(x: Float, y: Float): Pair<Int, Int> {
+    private fun getHistorySizeSafe(): Int {
+        val session = currentSession ?: return 0
+        return try {
+            NativeTerminal.getHistorySize(session.getNativeHandle())
+        } catch (_: Exception) {
+            0
+        }
+    }
+
+    private fun getScreenRowsSafe(): Int {
+        val session = currentSession ?: return terminalRows
+        return try {
+            session.getScreenDimensions().second.coerceAtMost(terminalRows)
+        } catch (_: Exception) {
+            terminalRows
+        }
+    }
+
+    private fun getFirstVisibleRow(): Int {
+        val historySize = getHistorySizeSafe()
+        val screenRows = getScreenRowsSafe()
+        val totalRows = historySize + screenRows
+        val maxScrollOffset = (totalRows - terminalRows).coerceAtLeast(0)
+        if (scrollOffset > maxScrollOffset) {
+            scrollOffset = maxScrollOffset
+        }
+        return (totalRows - terminalRows - scrollOffset).coerceAtLeast(0)
+    }
+
+    private fun screenToVirtualCell(x: Float, y: Float): Pair<Int, Int> {
         val colBias = cellWidth * 0.5f
         val col = (((x - horizontalPadding + colBias) / cellWidth).toInt())
             .coerceIn(0, terminalColumns - 1)
-        val row = (((y - verticalPadding) / cellHeight).toInt())
+        val visibleRow = (((y - verticalPadding) / cellHeight).toInt())
             .coerceIn(0, terminalRows - 1)
-        return col to row
+        val virtualRow = getFirstVisibleRow() + visibleRow
+        return col to virtualRow
+    }
+
+    private fun screenToCell(x: Float, y: Float): Pair<Int, Int> {
+        return screenToVirtualCell(x, y)
     }
 
     private fun normalizeSelection() {
@@ -753,10 +791,14 @@ class TerminalSurfaceView(context: Context) : View(context) {
             return dx * dx + dy * dy <= handleRadius * handleRadius * 4f
         }
 
+        val firstVisibleRow = getFirstVisibleRow()
+        val startVisibleRow = selectionStartRow - firstVisibleRow
+        val endVisibleRow = selectionEndRow - firstVisibleRow
+
         val startCx = horizontalPadding + (selectionStartCol * cellWidth)
-        val startCy = verticalPadding + (selectionStartRow * cellHeight) + cellHeight
+        val startCy = verticalPadding + (startVisibleRow * cellHeight) + cellHeight
         val endCx = horizontalPadding + ((selectionEndCol + 1) * cellWidth)
-        val endCy = verticalPadding + (selectionEndRow * cellHeight) + cellHeight
+        val endCy = verticalPadding + (endVisibleRow * cellHeight) + cellHeight
 
         return when {
             near(startCx, startCy) -> SelectionHandle.START
@@ -766,7 +808,26 @@ class TerminalSurfaceView(context: Context) : View(context) {
     }
 
     private fun applyHandleDrag(x: Float, y: Float) {
-        val (col, row) = screenToCell(x, y)
+        val historySize = getHistorySizeSafe()
+        val screenRows = getScreenRowsSafe()
+        val totalRows = historySize + screenRows
+        val maxScrollOffset = (totalRows - terminalRows).coerceAtLeast(0)
+
+        val edgeZone = (cellHeight * 1.5f).coerceAtLeast(24f)
+
+        if (maxScrollOffset > 0) {
+            when {
+                y < verticalPadding + edgeZone -> {
+                    scrollOffset = (scrollOffset - 1).coerceAtLeast(0)
+                }
+                y > height - verticalPadding - edgeZone -> {
+                    scrollOffset = (scrollOffset + 1).coerceAtMost(maxScrollOffset)
+                }
+            }
+        }
+
+        val (col, row) = screenToVirtualCell(x, y)
+
         when (activeHandle) {
             SelectionHandle.START -> {
                 selectionStartCol = col
