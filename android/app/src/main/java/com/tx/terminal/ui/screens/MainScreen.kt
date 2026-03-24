@@ -160,6 +160,7 @@ fun MainScreen(viewModel: TerminalViewModel) {
                                 text = { Text("Copy") },
                                 onClick = {
                                     viewModel.copyToClipboard()
+                                    viewModel.clearActiveSelection()
                                     menuExpanded = false
                                 },
                                 leadingIcon = {

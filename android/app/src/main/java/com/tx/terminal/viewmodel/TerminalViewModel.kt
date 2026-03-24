@@ -198,6 +198,10 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
     /**
      * Paste from clipboard
      */
+    fun clearActiveSelection() {
+        activeSession?.clearSelection()
+    }
+
     fun pasteFromClipboard() {
         val clipboard = getApplication<Application>().getSystemService(
             Context.CLIPBOARD_SERVICE

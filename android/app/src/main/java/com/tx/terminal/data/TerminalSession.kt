@@ -283,6 +283,17 @@ class TerminalSession(
     /**
      * Get screen content for debugging
      */
+    fun clearSelection() {
+        if (nativeHandle != 0L) {
+            try {
+                NativeTerminal.clearSelection(nativeHandle)
+                onScreenUpdate?.invoke()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to clear selection", e)
+            }
+        }
+    }
+
     fun getScreenContent(): String {
         return if (nativeHandle != 0L) {
             try {
