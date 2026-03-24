@@ -168,11 +168,7 @@ class TerminalSession(
                         onSessionFinished?.invoke(exitCode)
                         break
                     }
-                    
-                    // Notify UI to redraw
-                    onScreenUpdate?.invoke()
-                    
-                    delay(16) // ~60 FPS
+                    delay(100)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in reader loop", e)
                     delay(100) // Back off on error
