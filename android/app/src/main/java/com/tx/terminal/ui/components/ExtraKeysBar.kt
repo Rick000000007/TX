@@ -54,6 +54,18 @@ fun ExtraKeysBar(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
+            ExtraKeyButton(
+                text = "CTRL",
+                onClick = { },
+                isActive = false
+            )
+
+            ExtraKeyButton(
+                text = "ALT",
+                onClick = { }
+            )
+
             // Control keys section
             ExtraKeyButton(
                 text = "ESC",
@@ -111,26 +123,8 @@ fun ExtraKeysBar(
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
             // Signal keys section (accent color for visibility)
-            ExtraKeyButton(
-                text = "^C",
-                onClick = onCtrlC,
-                isAccent = true
-            )
-            ExtraKeyButton(
-                text = "^D",
-                onClick = onCtrlD,
-                isAccent = true
-            )
-            ExtraKeyButton(
-                text = "^Z",
-                onClick = onCtrlZ,
-                isAccent = true
-            )
-            
             // Ctrl+L for clear screen
-            ExtraKeyButton(
-                text = "^L",
-                onClick = { onSendText("\u000c") }, // FF (Ctrl+L)
+            }, // FF (Ctrl+L)
                 isAccent = false
             )
 
@@ -155,7 +149,7 @@ fun ExtraKeysBar(
 private fun ExtraKeyButton(
     text: String,
     onClick: () -> Unit,
-    isAccent: Boolean = false
+    isActive: Boolean = false
 ) {
     Button(
         onClick = onClick,
@@ -163,12 +157,12 @@ private fun ExtraKeyButton(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
         shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isAccent) {
+            containerColor = if (isActive) {
                 MaterialTheme.colorScheme.primaryContainer
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             },
-            contentColor = if (isAccent) {
+            contentColor = if (isActive) {
                 MaterialTheme.colorScheme.onPrimaryContainer
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
