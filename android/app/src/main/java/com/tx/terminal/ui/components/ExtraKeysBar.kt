@@ -57,8 +57,7 @@ fun ExtraKeysBar(
 
             ExtraKeyButton(
                 text = "CTRL",
-                onClick = { },
-                isActive = false
+                onClick = { }
             )
 
             ExtraKeyButton(
@@ -125,7 +124,6 @@ fun ExtraKeysBar(
             // Signal keys section (accent color for visibility)
             // Ctrl+L for clear screen
             }, // FF (Ctrl+L)
-                isAccent = false
             )
 
             VerticalSeparator(modifier = Modifier.height(24.dp))
@@ -145,11 +143,11 @@ fun ExtraKeysBar(
     }
 }
 
+
 @Composable
 private fun ExtraKeyButton(
     text: String,
-    onClick: () -> Unit,
-    isActive: Boolean = false
+    onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
@@ -157,16 +155,8 @@ private fun ExtraKeyButton(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
         shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isActive) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-            contentColor = if (isActive) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
         Text(
@@ -175,6 +165,7 @@ private fun ExtraKeyButton(
         )
     }
 }
+
 
 @Composable
 private fun ExtraKeyIcon(
