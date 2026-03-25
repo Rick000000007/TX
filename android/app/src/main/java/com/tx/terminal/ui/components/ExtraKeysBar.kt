@@ -58,23 +58,16 @@ fun ExtraKeysBar(
             ExtraKeyButton(
                 text = "CTRL",
                 onClick = { }
-            )
-
             ExtraKeyButton(
                 text = "ALT",
                 onClick = { }
-            )
-
             // Control keys section
             ExtraKeyButton(
                 text = "ESC",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_ESCAPE, 0) }
-            )
             ExtraKeyButton(
                 text = "TAB",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_TAB, 0) }
-            )
-
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
             // Arrow keys section
@@ -82,38 +75,37 @@ fun ExtraKeysBar(
                 icon = Icons.Default.KeyboardArrowUp,
                 contentDescription = "Up",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_UP, 0) }
-            )
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Down",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_DOWN, 0) }
-            )
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowLeft,
                 contentDescription = "Left",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_LEFT, 0) }
-            )
             ExtraKeyIcon(
                 icon = Icons.Default.KeyboardArrowRight,
                 contentDescription = "Right",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_DPAD_RIGHT, 0) }
-            )
-
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
             // Navigation keys section
+            
             ExtraKeyButton(
                 text = "HOME",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_MOVE_HOME, 0) }
             )
+
             ExtraKeyButton(
                 text = "END",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_MOVE_END, 0) }
             )
+
             ExtraKeyButton(
                 text = "PGUP",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_PAGE_UP, 0) }
             )
+
             ExtraKeyButton(
                 text = "PGDN",
                 onClick = { onKeyPressed(KeyEvent.KEYCODE_PAGE_DOWN, 0) }
@@ -121,28 +113,46 @@ fun ExtraKeysBar(
 
             VerticalSeparator(modifier = Modifier.height(24.dp))
 
+
             // Signal keys section (accent color for visibility)
-            // Ctrl+L for clear screen
-            }, // FF (Ctrl+L)
-            )
-
-            VerticalSeparator(modifier = Modifier.height(24.dp))
-
-            // Clipboard section
-            ExtraKeyIcon(
-                icon = Icons.Default.ContentCopy,
-                contentDescription = "Copy",
-                onClick = onCopy
-            )
-            ExtraKeyIcon(
-                icon = Icons.Default.ContentPaste,
-                contentDescription = "Paste",
-                onClick = onPaste
-            )
-        }
+            
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+        shape = MaterialTheme.shapes.small,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium
     }
 }
 
+
+@Composable
+private fun ExtraKeyIcon(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit
+) {
+    FilledTonalIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(36.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp)
+    }
+}
+
+@Composable
+private fun VerticalSeparator(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .width(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant)
+}
 
 @Composable
 private fun ExtraKeyButton(
@@ -165,7 +175,6 @@ private fun ExtraKeyButton(
         )
     }
 }
-
 
 @Composable
 private fun ExtraKeyIcon(
