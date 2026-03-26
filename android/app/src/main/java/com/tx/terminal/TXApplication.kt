@@ -10,6 +10,7 @@ import com.tx.terminal.data.TerminalEnvironment
 import com.tx.terminal.data.TerminalPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class TXApplication : Application() {
