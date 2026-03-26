@@ -51,7 +51,7 @@ class TerminalSession(
             return TerminalSession(
                 id = generateId(),
                 name = name,
-                shellPath = "/data/data/com.tx.terminal/files/usr/bin/sh"
+                shellPath = "/data/data/com.tx.terminal/files/usr/bin/sh",
                 initialCommand = initialCommand,
                 columns = columns,
                 rows = rows,
@@ -428,13 +428,12 @@ class SessionManager {
         columns: Int = 80,
         rows: Int = 24
     ): TerminalSession? {
-        val session = TerminalSession.createWithEnvironment(
-            context = TXApplication.instance,
-            name = name,
-            shellPath = "/data/data/com.tx.terminal/files/usr/bin/sh"
-            initialCommand = initialCommand,
-            columns = columns,
-            rows = rows
+       val session = TerminalSession.createWithEnvironment(
+    context = TXApplication.instance,
+    name = name,
+    initialCommand = initialCommand,
+    columns = columns,
+    rows = rows
         )
         
         // Initialize the session first
