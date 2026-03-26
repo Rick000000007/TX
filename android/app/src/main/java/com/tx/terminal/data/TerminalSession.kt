@@ -41,7 +41,6 @@ class TerminalSession(
         fun createWithEnvironment(
             context: Context,
             name: String = "Terminal",
-            shellPath: String = "/system/bin/sh",
             initialCommand: String? = null,
             columns: Int = 80,
             rows: Int = 24
@@ -425,7 +424,6 @@ class SessionManager {
      */
     fun createSession(
         name: String = "Terminal",
-        shellPath: String = "/system/bin/sh",
         initialCommand: String? = null,
         columns: Int = 80,
         rows: Int = 24
