@@ -54,7 +54,37 @@ class TXApplication : Application() {
         applicationScope.launch {
             try {
                 val success = TerminalEnvironment.verifyDirectories(this@TXApplication)
-                if (success) {
+                val assetManager = assets
+val targetDir = filesDir
+
+fun copyAsset(path: String) {
+    val files = assetManager.list(path) ?: return
+    for (file in files) {
+        val fullPath = if (path.isEmpty()) file else "$path/$file"
+        val subFiles = assetManager.list(fullPath)
+
+        if (subFiles != null && subFiles.isNotEmpty()) {
+            copyAsset(fullPath)
+        } else {
+            val outFile = File(targetDir, fullPath.removePrefix("bootstrap/"))
+            outFile.parentFile?.mkdirs()
+
+            assetManager.open(fullPath).use { input ->
+                outFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            outFile.setExecutable(true)
+        }
+    }
+}
+copyAsset("bootstrap")
+
+// call it
+copyAsset("bootstrap")
+                
+                  if (success) {
                     Log.i(TAG, "Terminal environment initialized successfully")
                 } else {
                     Log.w(TAG, "Some terminal directories could not be created")
