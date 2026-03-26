@@ -108,7 +108,6 @@ class TerminalViewModel(application: Application) : AndroidViewModel(application
         val shellPath = preferences.getShellPathSync()
         return sessionManager.createSession(
             name = name,
-            shellPath = shellPath,
             columns = _terminalColumns.value,
             rows = _terminalRows.value
         )
