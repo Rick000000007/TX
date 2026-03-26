@@ -93,19 +93,27 @@ object TerminalEnvironment {
         binDir: File
     ): Map<String, String> {
         val env = mutableMapOf<String, String>()
+        
+       // Core terminal environment variables
+           env["HOME"] = homeDir.absolutePath
+           env["PWD"] = homeDir.absolutePath
 
-        // Core terminal environment variables
-        env["HOME"] = homeDir.absolutePath
-        env["PWD"] = homeDir.absolutePath
-        env["TMPDIR"] = tmpDir.absolutePath
-        env["SHELL"] = "/system/bin/sh"
-        env["TERM"] = "xterm-256color"
-        env["COLORTERM"] = "truecolor"
+           val usrPath = File(context.filesDir, "usr").absolutePath
+           File(usrPath, "tmp").mkdirs()
+           env["PATH"] = "$usrPath/bin:/system/bin"
+           env["TMPDIR"] = "$usrPath/tmp"
+           env["SHELL"] = "$usrPath/bin/sh"
+           env["TERM"] = "xterm-256color"
+           env["COLORTERM"] = "truecolor"
 
         // Android-specific
-        env["ANDROID"] = "1"
-        env["ANDROID_ROOT"] = "/system"
-        env["ANDROID_DATA"] = "/data"
+           env["ANDROID"] = "1"
+           env["ANDROID_ROOT"] = "/system"
+           env["ANDROID_DATA"] = "/data"
+
+           env["PREFIX"] = usrPath
+           env["LD_LIBRARY_PATH"] = "$usrPath/lib"
+
 
         // Build PATH with app-private bin directory first, then system paths
         val existingPath = System.getenv("PATH") ?: ""
