@@ -13,14 +13,20 @@ object BootstrapInstaller {
     fun installIfNeeded(context: Context) {
         val usrDir = File(context.filesDir, "usr")
 
-        // Skip if already installed
-        if (usrDir.exists() && usrDir.list()?.isNotEmpty() == true) {
-            Log.i(TAG, "Bootstrap already installed, skipping")
+        // ✅ REAL CHECK (only skip if sh exists)
+        val shFile = File(usrDir, "bin/sh")
+        if (shFile.exists()) {
+            Log.i(TAG, "Bootstrap already installed (sh exists), skipping")
             return
         }
 
         Log.i(TAG, "Starting bootstrap installation...")
 
+        // 🔥 CLEAN BROKEN INSTALL
+        if (usrDir.exists()) {
+            Log.w(TAG, "Deleting broken bootstrap")
+            usrDir.deleteRecursively()
+        }
         usrDir.mkdirs()
 
         val inputStream = context.assets.open("bootstrap/bootstrap-aarch64.zip")
@@ -39,10 +45,10 @@ object BootstrapInstaller {
                         zip.copyTo(output)
                     }
 
-                    // 🔥 FIXED PERMISSIONS
-                    file.setExecutable(true, false)
+                    // ✅ Correct permissions
                     file.setReadable(true, false)
-                    file.setWritable(true)
+                    file.setWritable(true, false)
+                    file.setExecutable(true, false)
                 }
 
                 zip.closeEntry()
@@ -75,8 +81,8 @@ object BootstrapInstaller {
                     )
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "Symlink failed: ${link.absolutePath}", e)
             }
         }
     }
-}	
+}
