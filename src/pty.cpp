@@ -192,6 +192,10 @@ for (const auto& var : env) {
 envp.push_back(nullptr);
 
 // Execute shell with environment
+setenv("PREFIX", "/data/data/com.tx.terminal/files/usr", 1);
+setenv("LD_LIBRARY_PATH", "/data/data/com.tx.terminal/files/usr/lib", 1);
+setenv("LD_PRELOAD", "/data/data/com.tx.terminal/files/usr/lib/libtermux-exec-ld-preload.so", 1);
+setenv("PATH", "/data/data/com.tx.terminal/files/usr/bin", 1);
 execve(shell.c_str(), args, envp.data());
 
 // Fallback
