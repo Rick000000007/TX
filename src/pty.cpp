@@ -178,14 +178,28 @@ PTYResult PTY::open(const std::string& shell,
         ws.ws_ypixel = 0;
         ioctl(STDOUT_FILENO, TIOCSWINSZ, &ws);
         
-        // Execute shell
-        execl(shell.c_str(), shell.c_str(), nullptr);
-        
-        // If exec fails, try /system/bin/sh (Android fallback)
-        execl("/system/bin/sh", "sh", nullptr);
-        
-        // Last resort
-        _exit(127);
+       // Prepare arguments
+char* const args[] = {
+    const_cast<char*>(shell.c_str()),
+    nullptr
+};
+
+// Convert env vector to envp
+std::vector<char*> envp;
+for (const auto& var : env) {
+    envp.push_back(const_cast<char*>(var.c_str()));
+}
+envp.push_back(nullptr);
+
+// Execute shell with environment
+execve(shell.c_str(), args, envp.data());
+
+// Fallback
+execve("/system/bin/sh", args, envp.data());
+
+// Last resort
+_exit(127);
+
     }
     
     // Parent process
