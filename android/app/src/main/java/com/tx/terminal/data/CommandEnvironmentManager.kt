@@ -122,18 +122,32 @@ class CommandEnvironmentManager(private val context: Context) {
     /**
      * Get environment variables for the command environment
      */
-    fun getEnvironmentVariables(): Map<String, String> {
-        val baseDir = context.filesDir
-        return mapOf(
-            "TX_BIN" to File(baseDir, DIR_BIN).absolutePath,
-            "TX_LIB" to File(baseDir, DIR_LIB).absolutePath,
-            "TX_ETC" to File(baseDir, DIR_ETC).absolutePath,
-            "TX_SHARE" to File(baseDir, DIR_SHARE).absolutePath,
-            "TX_PACKAGES" to File(baseDir, DIR_PACKAGES).absolutePath,
-            "MANPATH" to File(baseDir, DIR_MAN).absolutePath
-        )
-    }
-    
+     fun getEnvironmentVariables(): Map<String, String> {
+    val baseDir = context.filesDir
+    val usrPath = File(baseDir, "usr").absolutePath
+
+    return mapOf(
+        // 🔥 CRITICAL FIX
+        "PATH" to "$usrPath/bin:$usrPath/usr/bin:/system/bin",
+
+        // Libraries
+        "LD_LIBRARY_PATH" to "$usrPath/lib",
+
+        // Temp
+        "TMPDIR" to context.cacheDir.absolutePath,
+
+        // TX paths
+        "TX_BIN" to File(baseDir, DIR_BIN).absolutePath,
+        "TX_LIB" to File(baseDir, DIR_LIB).absolutePath,
+        "TX_ETC" to File(baseDir, DIR_ETC).absolutePath,
+        "TX_SHARE" to File(baseDir, DIR_SHARE).absolutePath,
+        "TX_PACKAGES" to File(baseDir, DIR_PACKAGES).absolutePath,
+
+        // Man pages
+        "MANPATH" to File(baseDir, DIR_MAN).absolutePath
+         )
+       }
+   
     /**
      * Create a directory if it doesn't exist
      */
