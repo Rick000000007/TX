@@ -8,6 +8,7 @@ import com.tx.terminal.jni.NativeTerminal
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicLong
+import java.io.File
 
 /**
  * Represents a single terminal session with its own PTY and shell
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong
 class TerminalSession(
     val id: String,
     val name: String,
-    private val shellPath: String = "/system/bin/sh",
+    private val shellPath: String = "/data/data/com.tx.terminal/files/usr/bin/sh",
     private val initialCommand: String? = null,
     private val columns: Int = 80,
     private val rows: Int = 24,
