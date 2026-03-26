@@ -161,15 +161,6 @@ PTYResult PTY::open(const std::string& shell,
             // If not a directory or chdir fails, shell starts in inherited directory
         }
         
-        // Set environment variables
-        // Note: TERM and COLORTERM are set by the JNI layer with proper values
-        for (const auto& var : env) {
-            size_t pos = var.find('=');
-            if (pos != std::string::npos) {
-                setenv(var.substr(0, pos).c_str(), var.substr(pos + 1).c_str(), 1);
-            }
-        }
-        
         // Set terminal size
         struct winsize ws;
         ws.ws_col = cols_;
@@ -189,14 +180,22 @@ std::vector<char*> envp;
 for (const auto& var : env) {
     envp.push_back(const_cast<char*>(var.c_str()));
 }
+envp.push_back(const_cast<char*>("PREFIX=/data/data/com.tx.terminal/files/usr"));
+envp.push_back(const_cast<char*>("LD_LIBRARY_PATH=/data/data/com.tx.terminal/files/usr/lib"));
+envp.push_back(const_cast<char*>("LD_PRELOAD=/data/data/com.tx.terminal/files/usr/lib/libtermux-exec-ld-preload.so"));
+envp.push_back(const_cast<char*>("PATH=/data/data/com.tx.terminal/files/usr/bin"));
 envp.push_back(nullptr);
 
 // Execute shell with environment
-setenv("PREFIX", "/data/data/com.tx.terminal/files/usr", 1);
-setenv("LD_LIBRARY_PATH", "/data/data/com.tx.terminal/files/usr/lib", 1);
-setenv("LD_PRELOAD", "/data/data/com.tx.terminal/files/usr/lib/libtermux-exec-ld-preload.so", 1);
-setenv("PATH", "/data/data/com.tx.terminal/files/usr/bin", 1);
-execve(shell.c_str(), args, envp.data());
+std::string termux_exec = "/data/data/com.tx.terminal/files/usr/bin/termux-exec";
+
+char* const new_args[] = {
+    const_cast<char*>(termux_exec.c_str()),
+    const_cast<char*>(shell.c_str()),
+    nullptr
+};
+
+execve(termux_exec.c_str(), new_args, envp.data());
 
 // Fallback
 execve("/system/bin/sh", args, envp.data());
