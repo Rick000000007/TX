@@ -130,7 +130,8 @@ object TerminalEnvironment {
             }
         }
 
-        env["PATH"] = pathBuilder.toString()
+        val usrPath = File(context.filesDir, "usr").absolutePath
+        env["PATH"] = "$usrPath/bin:$usrPath/usr/bin:/system/bin"        
 
         // User and locale
         env["USER"] = "shell"
