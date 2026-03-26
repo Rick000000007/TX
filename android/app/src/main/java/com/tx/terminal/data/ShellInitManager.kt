@@ -20,7 +20,7 @@ class ShellInitManager(private val context: Context) {
 PS1='$ '
 
 # Safe aliases
-alias ls='ls -F'
+alias ls='toybox ls'
 alias ll='ls -la'
 alias la='ls -a'
 alias l='ls -CF'
