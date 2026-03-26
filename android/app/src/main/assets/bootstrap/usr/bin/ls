@@ -1,2 +1,2 @@
 #!/system/bin/sh
-exec /system/bin/ls "$@"
+/system/bin/sh /system/bin/ls "$@"
