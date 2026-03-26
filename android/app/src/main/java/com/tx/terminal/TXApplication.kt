@@ -3,13 +3,13 @@ package com.tx.terminal
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import com.tx.terminal.bootstrap.BootstrapInstaller
 import com.tx.terminal.data.CommandEnvironmentManager
 import com.tx.terminal.data.SessionStateManager
 import com.tx.terminal.data.TerminalEnvironment
 import com.tx.terminal.data.TerminalPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class TXApplication : Application() {
@@ -53,6 +53,8 @@ class TXApplication : Application() {
         // Initialize terminal environment (create directories)
         applicationScope.launch {
             try {
+        BootstrapInstaller.installIfNeeded(this@TXApplication)
+        Log.i(TAG, "Bootstrap installed")
                 val success = TerminalEnvironment.verifyDirectories(this@TXApplication)
                 if (success) {
                     Log.i(TAG, "Terminal environment initialized successfully")
