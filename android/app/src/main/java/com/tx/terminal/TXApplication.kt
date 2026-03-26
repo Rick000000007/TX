@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.io.File
 
 class TXApplication : Application() {
     
@@ -68,12 +69,16 @@ fun copyAsset(path: String) {
         } else {
             val outFile = File(targetDir, fullPath.removePrefix("bootstrap/"))
             outFile.parentFile?.mkdirs()
+            
+            val input = assetManager.open(fullPath)
+            val output = outFile.outputStream()
 
-            assetManager.open(fullPath).use { input ->
-                outFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
+            input.copyTo(output)
+
+            input.close()
+            output.close()
+        
+
 
             outFile.setExecutable(true)
         }
