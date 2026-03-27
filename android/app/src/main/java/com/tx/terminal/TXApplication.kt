@@ -41,6 +41,7 @@ class TXApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "TX Terminal starting...")
+        
         // 🔥 Install userspace binaries (toybox etc.)
 	try {
     	val assetManager = assets
@@ -64,7 +65,16 @@ class TXApplication : Application() {
         outFile.setReadable(true, false)
         outFile.setWritable(true, false)
         outFile.setExecutable(true, false)
-    }
+        
+        try {
+    	val process = ProcessBuilder("chmod", "755", outFile.absolutePath)
+        .redirectErrorStream(true)
+        .start()
+    	process.waitFor()
+	} catch (e: Exception) {
+    	Log.e(TAG, "chmod failed for ${outFile.absolutePath}", e)
+	}
+     }
 
     	Log.i(TAG, "Userspace binaries installed")
 
