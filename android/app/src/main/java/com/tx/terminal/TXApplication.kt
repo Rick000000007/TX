@@ -1,5 +1,6 @@
 package com.tx.terminal
 
+import java.io.File
 import android.app.Application
 import android.content.Context
 import android.util.Log
@@ -40,7 +41,37 @@ class TXApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "TX Terminal starting...")
-        
+        // 🔥 Install userspace binaries (toybox etc.)
+	try {
+    	val assetManager = assets
+    	val targetDir = File(filesDir, "usr/bin")
+	
+    	if (!targetDir.exists()) {
+        targetDir.mkdirs()
+    }
+
+   	 val files = assetManager.list("usr/bin") ?: emptyArray()
+
+    	for (file in files) {
+        val outFile = File(targetDir, file)
+
+        assetManager.open("usr/bin/$file").use { input ->
+            outFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        outFile.setReadable(true, false)
+        outFile.setWritable(true, false)
+        outFile.setExecutable(true, false)
+    }
+
+    	Log.i(TAG, "Userspace binaries installed")
+
+	} catch (e: Exception) {
+    	Log.e(TAG, "Failed to install userspace", e)
+}        
+
         // Initialize preferences
         preferences = TerminalPreferences(this)
         

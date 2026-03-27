@@ -111,7 +111,7 @@ object TerminalEnvironment {
         val existingPath = System.getenv("PATH") ?: ""
         val pathBuilder = StringBuilder()
 
-        pathBuilder.append(binDir.absolutePath)
+        pathBuilder.append("${context.filesDir}/usr/bin")        
         pathBuilder.append(":/system/bin")
         pathBuilder.append(":/system/xbin")
         pathBuilder.append(":/vendor/bin")
