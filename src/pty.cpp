@@ -178,11 +178,18 @@ PTYResult PTY::open(const std::string& shell,
         ws.ws_ypixel = 0;
         ioctl(STDOUT_FILENO, TIOCSWINSZ, &ws);
         
-        // Execute shell
-        execl(shell.c_str(), shell.c_str(), nullptr);
-        
-        // If exec fails, try /system/bin/sh (Android fallback)
-        execl("/system/bin/sh", "sh", nullptr);
+        // 🔥 Try to execute our userspace toybox first
+const char* toybox_path = "/data/user/0/com.tx.terminal/files/usr/bin/toybox";
+
+if (access(toybox_path, X_OK) == 0) {
+    execl(toybox_path, "toybox", "sh", nullptr);
+}
+
+// Fallback to provided shell
+execl(shell.c_str(), shell.c_str(), nullptr);
+
+// Final fallback
+execl("/system/bin/sh", "sh", nullptr);
         
         // Last resort
         _exit(127);
