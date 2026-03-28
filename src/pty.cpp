@@ -186,7 +186,14 @@ if (access(toybox_path, X_OK) == 0) {
 }
 
 // Fallback to provided shell
-execl(shell.c_str(), shell.c_str(), nullptr);
+
+// 🔥 Intercept shell execution
+if (shell == "/system/bin/sh") {
+    // Keep normal shell for now
+    execl("/system/bin/sh", "sh", nullptr);
+} else {
+    execl(shell.c_str(), shell.c_str(), nullptr);
+}
 
 // Final fallback
 execl("/system/bin/sh", "sh", nullptr);
