@@ -8,71 +8,77 @@ import com.tx.terminal.data.CommandEnvironmentManager
 import com.tx.terminal.data.SessionStateManager
 import com.tx.terminal.data.TerminalEnvironment
 import com.tx.terminal.data.TerminalPreferences
+import com.tx.terminal.data.UserspaceInstaller
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class TXApplication : Application() {
-    
+
     companion object {
         private const val TAG = "TXApplication"
         lateinit var instance: TXApplication
             private set
     }
-    
+
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     lateinit var preferences: TerminalPreferences
         private set
-    
-    // Phase 2: Session state manager for persistence
+
     lateinit var sessionStateManager: SessionStateManager
         private set
-    
-    // Phase 2: Command environment manager
+
     lateinit var commandEnvironmentManager: CommandEnvironmentManager
         private set
-    
+
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         instance = this
     }
-    
+
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "TX Terminal starting...")
-        
+
         // Initialize preferences
         preferences = TerminalPreferences(this)
-        
-        // Phase 2: Initialize session state manager
+
+        // Initialize session state manager
         sessionStateManager = SessionStateManager(this)
-        
-        // Phase 2: Initialize command environment manager
+
+        // Initialize command environment manager
         commandEnvironmentManager = CommandEnvironmentManager(this)
-        
+
         // Initialize terminal environment (create directories)
         applicationScope.launch {
             try {
-        BootstrapInstaller.installIfNeeded(this@TXApplication)
-        Log.i(TAG, "Bootstrap installed")
+                // Step 1: Bootstrap
+                BootstrapInstaller.installIfNeeded(this@TXApplication)
+                Log.i(TAG, "Bootstrap installed")
+
+                // Step 2: Userspace (busybox, usr/bin)
+                UserspaceInstaller.setup(this@TXApplication)
+                Log.i(TAG, "Userspace installed")
+
+                // Step 3: Verify directories
                 val success = TerminalEnvironment.verifyDirectories(this@TXApplication)
                 if (success) {
                     Log.i(TAG, "Terminal environment initialized successfully")
                 } else {
                     Log.w(TAG, "Some terminal directories could not be created")
                 }
-                
-                // Phase 2: Initialize command environment
+
+                // Step 4: Initialize command environment
                 commandEnvironmentManager.initialize()
                 Log.i(TAG, "Command environment initialized")
-                
+
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize terminal environment", e)
             }
         }
-        
-        // Initialize native library
+
+        // Load native library
         try {
             System.loadLibrary("tx_jni")
             Log.i(TAG, "Native library loaded successfully")
