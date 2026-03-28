@@ -122,31 +122,28 @@ class CommandEnvironmentManager(private val context: Context) {
     /**
      * Get environment variables for the command environment
      */
-     fun getEnvironmentVariables(): Map<String, String> {
+      fun getEnvironmentVariables(): Map<String, String> {
     val baseDir = context.filesDir
-    val usrPath = File(baseDir, "usr").absolutePath
+    val usrDir = File(baseDir, "usr")
 
     return mapOf(
-        // 🔥 CRITICAL FIX
-        "PATH" to "$usrPath/bin:$usrPath/usr/bin:/system/bin",
+        // ✅ CORRECT PATH (ONLY BUSYBOX)
+        "PATH" to "${usrDir.absolutePath}/bin:/system/bin",
 
-        // Libraries
-        "LD_LIBRARY_PATH" to "$usrPath/lib",
+        // ❌ REMOVE BROKEN LIB USAGE
+        // (no LD_LIBRARY_PATH needed for now)
 
-        // Temp
+        // ✅ CLEAN ENV (VERY IMPORTANT)
+        "HOME" to baseDir.absolutePath,
         "TMPDIR" to context.cacheDir.absolutePath,
 
-        // TX paths
-        "TX_BIN" to File(baseDir, DIR_BIN).absolutePath,
-        "TX_LIB" to File(baseDir, DIR_LIB).absolutePath,
-        "TX_ETC" to File(baseDir, DIR_ETC).absolutePath,
-        "TX_SHARE" to File(baseDir, DIR_SHARE).absolutePath,
-        "TX_PACKAGES" to File(baseDir, DIR_PACKAGES).absolutePath,
+        // 🔥 THIS FIXES YOUR ERROR
+        "LD_PRELOAD" to "",
 
-        // Man pages
-        "MANPATH" to File(baseDir, DIR_MAN).absolutePath
-         )
-       }
+        // Optional TX paths (safe)
+        "TX_HOME" to baseDir.absolutePath
+    )
+}     
    
     /**
      * Create a directory if it doesn't exist
