@@ -3,7 +3,6 @@ package com.tx.terminal
 import android.app.Application
 import android.content.Context
 import android.util.Log
-import com.tx.terminal.bootstrap.BootstrapInstaller
 import com.tx.terminal.data.CommandEnvironmentManager
 import com.tx.terminal.data.SessionStateManager
 import com.tx.terminal.data.TerminalEnvironment
@@ -23,6 +22,7 @@ class TXApplication : Application() {
     }
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     lateinit var preferences: TerminalPreferences
         private set
 
@@ -50,18 +50,14 @@ class TXApplication : Application() {
         // Initialize command environment manager
         commandEnvironmentManager = CommandEnvironmentManager(this)
 
-        // Initialize terminal environment (create directories)
+        // Initialize terminal environment
         applicationScope.launch {
             try {
-                // Step 1: Bootstrap
-                BootstrapInstaller.installIfNeeded(this@TXApplication)
-                Log.i(TAG, "Bootstrap installed")
-
-                // Step 2: Userspace (busybox, usr/bin)
+                // Step 1: Userspace (busybox, usr/bin)
                 UserspaceInstaller.setup(this@TXApplication)
                 Log.i(TAG, "Userspace installed")
 
-                // Step 3: Verify directories
+                // Step 2: Verify directories
                 val success = TerminalEnvironment.verifyDirectories(this@TXApplication)
                 if (success) {
                     Log.i(TAG, "Terminal environment initialized successfully")
@@ -69,7 +65,7 @@ class TXApplication : Application() {
                     Log.w(TAG, "Some terminal directories could not be created")
                 }
 
-                // Step 4: Initialize command environment
+                // Step 3: Initialize command environment
                 commandEnvironmentManager.initialize()
                 Log.i(TAG, "Command environment initialized")
 
