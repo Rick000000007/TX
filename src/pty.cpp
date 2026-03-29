@@ -180,10 +180,13 @@ std::vector<char*> envp;
 for (const auto& var : env) {
     envp.push_back(const_cast<char*>(var.c_str()));
 }
+// 🔥 Clean inherited env
+unsetenv("LD_PRELOAD");
+unsetenv("LD_LIBRARY_PATH");
+
 envp.push_back(const_cast<char*>("PREFIX=/data/data/com.tx.terminal/files/usr"));
-envp.push_back(const_cast<char*>("LD_LIBRARY_PATH=/data/data/com.tx.terminal/files/usr/lib"));
-envp.push_back(const_cast<char*>("LD_PRELOAD=/data/data/com.tx.terminal/files/usr/lib/libtermux-exec-ld-preload.so"));
 envp.push_back(const_cast<char*>("PATH=/data/data/com.tx.terminal/files/usr/bin"));
+envp.push_back(const_cast<char*>("HOME=/data/data/com.tx.terminal/files/home"));
 envp.push_back(nullptr);
 
 // Execute shell with environment
