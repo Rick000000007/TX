@@ -3,6 +3,7 @@ package com.tx.terminal.data
 import android.content.Context
 import java.io.File
 
+
 object UserspaceInstaller {
 
     fun setup(context: Context) {
@@ -10,22 +11,23 @@ object UserspaceInstaller {
         val usrDir = File(filesDir, "usr")
         val binDir = File(usrDir, "bin")
 
-        // Step 1: Copy assets if not exists
-        if (!usrDir.exists()) {
-            copyAssets(context, "usr", usrDir.absolutePath)
+        // Step 1: Always ensure assets copied
+        copyAssets(context, "usr", usrDir.absolutePath)
+
+        // Step 2: Setup busybox permissions
+        val busybox = File(binDir, "busybox")
+        if (busybox.exists()) {
+            busybox.setExecutable(true, false)
+            busybox.setReadable(true, false)
+            busybox.setWritable(true, true)
         }
 
-        // Step 2: Setup busybox
-        val busybox = File(binDir, "busybox")
-        if (!busybox.exists()) return
-
-        busybox.setExecutable(true)
-
-        // Step 3: Install busybox commands
+        // Step 3: Install busybox applets (IMPORTANT: -s)
         try {
             val process = ProcessBuilder(
                 busybox.absolutePath,
                 "--install",
+                "-s",
                 binDir.absolutePath
             )
                 .redirectErrorStream(true)
