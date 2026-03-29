@@ -185,21 +185,20 @@ unsetenv("LD_PRELOAD");
 unsetenv("LD_LIBRARY_PATH");
 
 envp.push_back(const_cast<char*>("PREFIX=/data/data/com.tx.terminal/files/usr"));
-envp.push_back(const_cast<char*>("PATH=/data/data/com.tx.terminal/files/usr/bin"));
+envp.push_back(const_cast<char*>("PATH=/data/data/com.tx.terminal/files/usr/bin:/system/bin"));
 envp.push_back(const_cast<char*>("HOME=/data/data/com.tx.terminal/files/home"));
 envp.push_back(nullptr);
 
 // Execute shell with environment
-std::string termux_exec = "/data/data/com.tx.terminal/files/usr/bin/termux-exec";
+const char* shell_path = "/data/data/com.tx.terminal/files/usr/bin/busybox";
 
 char* const new_args[] = {
-    const_cast<char*>(termux_exec.c_str()),
-    const_cast<char*>(shell.c_str()),
+    const_cast<char*>("busybox"),
+    const_cast<char*>("sh"),
     nullptr
 };
 
-execve(termux_exec.c_str(), new_args, envp.data());
-
+execve(shell_path, new_args, envp.data());
 // Fallback
 execve("/system/bin/sh", args, envp.data());
 
