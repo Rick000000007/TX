@@ -52,27 +52,27 @@ class TXApplication : Application() {
 
         // Initialize terminal environment
         applicationScope.launch {
-            try {
-                // Step 1: Userspace (busybox, usr/bin)
-                UserspaceInstaller.setup(this@TXApplication)
-                Log.i(TAG, "Userspace installed")
+                try {
+        // 🔥 Step 1: Userspace (BLOCKING)
+        UserspaceInstaller.setup(this@TXApplication)
+        Log.i(TAG, "Userspace installed")
 
-                // Step 2: Verify directories
-                val success = TerminalEnvironment.verifyDirectories(this@TXApplication)
-                if (success) {
-                    Log.i(TAG, "Terminal environment initialized successfully")
-                } else {
-                    Log.w(TAG, "Some terminal directories could not be created")
-                }
-
-                // Step 3: Initialize command environment
-                commandEnvironmentManager.initialize()
-                Log.i(TAG, "Command environment initialized")
-
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to initialize terminal environment", e)
-            }
+        // 🔥 Step 2: Verify directories
+        val success = TerminalEnvironment.verifyDirectories(this@TXApplication)
+        if (success) {
+        Log.i(TAG, "Terminal environment initialized successfully")
+        } else {
+        Log.w(TAG, "Some terminal directories could not be created")
         }
+
+        // 🔥 Step 3: Initialize command environment
+        commandEnvironmentManager.initialize()
+        Log.i(TAG, "Command environment initialized")
+
+        } catch (e: Exception) {
+        Log.e(TAG, "Failed to initialize terminal environment", e)
+        }
+    }
 
         // Load native library
         try {
