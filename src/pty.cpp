@@ -119,13 +119,17 @@ PTYResult PTY::open(const std::string& shell,
 
         // Set terminal attributes
         struct termios tios;
-        if (tcgetattr(slave_fd, &tios) == 0) {
-            // Configure for typical terminal behavior
-            cfmakeraw(&tios);
-            tios.c_cc[VMIN] = 1;
-            tios.c_cc[VTIME] = 0;
-            tcsetattr(slave_fd, TCSANOW, &tios);
-        }
+	if (tcgetattr(slave_fd, &tios) == 0) {
+    	// ✅ Enable interactive terminal behavior
+    	tios.c_lflag |= (ECHO | ICANON | ISIG);
+    	tios.c_iflag |= (ICRNL);
+    	tios.c_oflag |= (OPOST);
+
+    	tios.c_cc[VMIN] = 1;
+    	tios.c_cc[VTIME] = 0;
+
+    	tcsetattr(slave_fd, TCSANOW, &tios);
+	}
         
         // Duplicate to stdio
         dup2(slave_fd, STDIN_FILENO);
