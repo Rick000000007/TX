@@ -1,10 +1,10 @@
 package com.tx.terminal.bootstrap
 
 import android.content.Context
+import android.content.res.AssetManager
 import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
-import java.util.zip.ZipInputStream
 
 object BootstrapInstaller {
 
@@ -12,76 +12,77 @@ object BootstrapInstaller {
 
     fun installIfNeeded(context: Context) {
         val usrDir = File(context.filesDir, "usr")
+        val binDir = File(usrDir, "bin")
+        val shFile = File(binDir, "sh")
 
-        // ✅ REAL CHECK (only skip if sh exists)
-        val shFile = File(usrDir, "bin/sh")
+        // ✅ Skip if already installed
         if (shFile.exists()) {
-            Log.i(TAG, "Bootstrap already installed (sh exists), skipping")
+            Log.i(TAG, "Bootstrap already installed (sh exists)")
             return
         }
 
-        Log.i(TAG, "Starting bootstrap installation...")
+        Log.i(TAG, "Installing bootstrap...")
 
-        // 🔥 CLEAN BROKEN INSTALL
+        // 🔥 Clean broken install
         if (usrDir.exists()) {
-            Log.w(TAG, "Deleting broken bootstrap")
+            Log.w(TAG, "Removing old bootstrap")
             usrDir.deleteRecursively()
         }
         usrDir.mkdirs()
 
-        val inputStream = context.assets.open("bootstrap/bootstrap-aarch64.zip")
+        try {
+            // 🔥 Copy assets/usr → files/usr
+            copyAssetFolder(context.assets, "usr", usrDir)
 
-        ZipInputStream(inputStream).use { zip ->
-            var entry = zip.nextEntry
+            // 🔥 Fix permissions
+            fixPermissions(usrDir)
 
-            while (entry != null) {
-                val file = File(usrDir, entry.name)
+            Log.i(TAG, "Bootstrap installed successfully")
 
-                if (entry.isDirectory) {
-                    file.mkdirs()
-                } else {
-                    file.parentFile?.mkdirs()
-                    FileOutputStream(file).use { output ->
-                        zip.copyTo(output)
-                    }
-
-                    // ✅ Correct permissions
-                    file.setReadable(true, false)
-                    file.setWritable(true, false)
-                    file.setExecutable(true, false)
-                }
-
-                zip.closeEntry()
-                entry = zip.nextEntry
-            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Bootstrap installation failed", e)
         }
-
-        // 🔥 CREATE SYMLINKS
-        createSymlinks(usrDir)
-
-        Log.i(TAG, "Bootstrap installation completed")
     }
 
-    private fun createSymlinks(usrDir: File) {
-        val symlinkFile = File(usrDir, "SYMLINKS.txt")
-        if (!symlinkFile.exists()) return
+    // ✅ Recursive asset copy
+    private fun copyAssetFolder(
+        assetManager: AssetManager,
+        src: String,
+        dest: File
+    ) {
+        val files = assetManager.list(src) ?: return
 
-        symlinkFile.forEachLine { line ->
-            val parts = line.split("←")
-            if (parts.size != 2) return@forEachLine
-
-            val link = File(usrDir, parts[0].trim())
-            val target = File(usrDir, parts[1].trim())
-
-            try {
-                if (!link.exists()) {
-                    link.parentFile?.mkdirs()
-                    Runtime.getRuntime().exec(
-                        arrayOf("ln", "-s", target.absolutePath, link.absolutePath)
-                    )
+        if (files.isEmpty()) {
+            // File
+            assetManager.open(src).use { input ->
+                FileOutputStream(dest).use { output ->
+                    input.copyTo(output)
                 }
+            }
+        } else {
+            // Directory
+            dest.mkdirs()
+            for (file in files) {
+                copyAssetFolder(
+                    assetManager,
+                    "$src/$file",
+                    File(dest, file)
+                )
+            }
+        }
+    }
+
+    // 🔥 Fix executable permissions (VERY IMPORTANT)
+    private fun fixPermissions(usrDir: File) {
+        val binDir = File(usrDir, "bin")
+
+        binDir.listFiles()?.forEach { file ->
+            try {
+                file.setReadable(true, false)
+                file.setWritable(true, true)
+                file.setExecutable(true, false)
             } catch (e: Exception) {
-                Log.e(TAG, "Symlink failed: ${link.absolutePath}", e)
+                Log.e(TAG, "Permission fix failed: ${file.absolutePath}", e)
             }
         }
     }
