@@ -108,6 +108,7 @@ class TerminalSession(
             
             if (envConfig != null) {
                 // Use proper environment setup
+                ProcessBuilder("/system/bin/sh", initialCommand ?: "").start()
                 nativeHandle = NativeTerminal.createWithEnvironment(
                     columns,
                     rows,
