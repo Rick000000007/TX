@@ -86,79 +86,80 @@ object TerminalEnvironment {
     /**
      * Build environment variables for shell sessions
      */
-    private fun buildEnvironmentVariables(
-        context: Context,
-        homeDir: File,
-        tmpDir: File,
-        binDir: File
-    ): Map<String, String> {
-        val env = mutableMapOf<String, String>()
-        
-       // Core terminal environment variables
-           env["HOME"] = homeDir.absolutePath
-           env["PWD"] = homeDir.absolutePath
+        private fun buildEnvironmentVariables(
+    context: Context,
+    homeDir: File,
+    tmpDir: File,
+    binDir: File
+): Map<String, String> {
 
-           val usrPath = File(context.filesDir, "usr").absolutePath
-           File(usrPath, "tmp").mkdirs()
-           env["PATH"] = "$usrPath/bin:/system/bin"
-           env["TMPDIR"] = "$usrPath/tmp"
-           env["SHELL"] = "$usrPath/bin/sh"
-           env["TERM"] = "xterm-256color"
-           env["COLORTERM"] = "truecolor"
+    val env = mutableMapOf<String, String>()
 
-        // Android-specific
-           env["ANDROID"] = "1"
-           env["ANDROID_ROOT"] = "/system"
-           env["ANDROID_DATA"] = "/data"
+    val rootfsPath = File(context.filesDir, "rootfs").absolutePath
 
-           env["PREFIX"] = usrPath
-           env["LD_LIBRARY_PATH"] = "$usrPath/lib"
+    // Core terminal environment
+    env["HOME"] = homeDir.absolutePath
+    env["PWD"] = homeDir.absolutePath
 
+    File(rootfsPath, "tmp").mkdirs()
 
-        // Build PATH with app-private bin directory first, then system paths
-        val existingPath = System.getenv("PATH") ?: ""
-        val pathBuilder = StringBuilder()
+    env["PATH"] = "$rootfsPath/bin:/system/bin"
+    env["TMPDIR"] = "$rootfsPath/tmp"
+    env["SHELL"] = "$rootfsPath/bin/sh"
+    env["TERM"] = "xterm-256color"
+    env["COLORTERM"] = "truecolor"
 
-        pathBuilder.append(binDir.absolutePath)
-        pathBuilder.append(":/system/bin")
-        pathBuilder.append(":/system/xbin")
-        pathBuilder.append(":/vendor/bin")
+    // Android base env
+    env["ANDROID"] = "1"
+    env["ANDROID_ROOT"] = "/system"
+    env["ANDROID_DATA"] = "/data"
 
-        if (existingPath.isNotEmpty() && existingPath != "/system/bin") {
-            val existingPaths = existingPath.split(":").filter {
-                it.isNotEmpty() &&
-                it != "/system/bin" &&
-                it != "/system/xbin" &&
-                it != "/vendor/bin"
-            }
+    env["PREFIX"] = rootfsPath
+    env["LD_LIBRARY_PATH"] = "$rootfsPath/lib"
 
-            if (existingPaths.isNotEmpty()) {
-                pathBuilder.append(":")
-                pathBuilder.append(existingPaths.joinToString(":"))
-            }
+    // Build PATH extras (keep your logic)
+    val existingPath = System.getenv("PATH") ?: ""
+    val pathBuilder = StringBuilder()
+
+    pathBuilder.append(binDir.absolutePath)
+    pathBuilder.append(":/system/bin:/system/xbin:/vendor/bin")
+
+    if (existingPath.isNotEmpty() && existingPath != "/system/bin") {
+        val existingPaths = existingPath.split(":").filter {
+            it.isNotEmpty() &&
+            it != "/system/bin" &&
+            it != "/system/xbin" &&
+            it != "/vendor/bin"
         }
 
-
-        // User and locale
-        env["USER"] = "shell"
-        env["LOGNAME"] = "shell"
-        env["LANG"] = System.getenv("LANG") ?: "en_US.UTF-8"
-
-        // Editor fallback
-        env["EDITOR"] = "vi"
-        env["VISUAL"] = "vi"
-
-        // History configuration
-        env["HISTFILE"] = File(homeDir, ".bash_history").absolutePath
-        env["HISTSIZE"] = "1000"
-        env["HISTFILESIZE"] = "2000"
-
-        // Prompt
-        env["PS1"] = "\\u@\\h:\\w\\$ "
-
-        return env
+        if (existingPaths.isNotEmpty()) {
+            pathBuilder.append(":")
+            pathBuilder.append(existingPaths.joinToString(":"))
+        }
     }
 
+    // Optional: override PATH (recommended)
+    env["PATH"] = "$rootfsPath/bin:${pathBuilder}"
+
+    // User + locale
+    env["USER"] = "shell"
+    env["LOGNAME"] = "shell"
+    env["LANG"] = System.getenv("LANG") ?: "en_US.UTF-8"
+
+    // Editor
+    env["EDITOR"] = "vi"
+    env["VISUAL"] = "vi"
+
+    // History
+    env["HISTFILE"] = File(homeDir, ".bash_history").absolutePath
+    env["HISTSIZE"] = "1000"
+    env["HISTFILESIZE"] = "2000"
+
+    // Prompt
+    env["PS1"] = "\\u@\\h:\\w\\$ "
+
+    return env
+}
     /**
      * Get the working directory for new shell sessions
      * Returns the home directory path

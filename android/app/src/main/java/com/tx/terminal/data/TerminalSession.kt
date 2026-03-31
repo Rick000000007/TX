@@ -23,7 +23,7 @@ import java.io.File
 class TerminalSession(
     val id: String,
     val name: String,
-    private val shellPath: String = "/data/data/com.tx.terminal/files/usr/bin/sh",
+    private val shellPath: String,
     private val initialCommand: String? = null,
     private val columns: Int = 80,
     private val rows: Int = 24,
@@ -51,7 +51,7 @@ class TerminalSession(
             return TerminalSession(
                 id = generateId(),
                 name = name,
-                shellPath = "/data/data/com.tx.terminal/files/usr/bin/sh",
+                shellPath = File(context.filesDir, "rootfs/bin/sh").absolutePath,
                 initialCommand = initialCommand,
                 columns = columns,
                 rows = rows,
