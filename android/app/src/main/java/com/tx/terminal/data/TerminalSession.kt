@@ -63,7 +63,7 @@ class TerminalSession(
     )
 
         }
-    
+    }
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var nativeHandle: Long = 0
     
