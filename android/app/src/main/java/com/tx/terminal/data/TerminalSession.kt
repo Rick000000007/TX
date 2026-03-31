@@ -38,25 +38,31 @@ class TerminalSession(
         /**
          * Create a new terminal session with proper environment setup
          */
-        fun createWithEnvironment(
-            context: Context,
-            name: String = "Terminal",
-            initialCommand: String? = null,
-            columns: Int = 80,
-            rows: Int = 24
-        ): TerminalSession {
-            // Initialize terminal environment (creates directories and builds env vars)
-            val envConfig = TerminalEnvironment.initialize(context)
-            
-            return TerminalSession(
-                id = generateId(),
-                name = name,
-                shellPath = File(context.filesDir, "rootfs/bin/sh").absolutePath,
-                initialCommand = initialCommand,
-                columns = columns,
-                rows = rows,
-                environmentConfig = envConfig
-            )
+              fun createWithEnvironment(
+    context: Context,
+    name: String = "Terminal",
+    initialCommand: String? = null,
+    columns: Int = 80,
+    rows: Int = 24
+): TerminalSession {
+
+    // ✅ REQUIRED (you removed this by mistake)
+    val envConfig = TerminalEnvironment.initialize(context)
+
+    // ✅ path to init.sh
+    val initPath = File(context.filesDir, "rootfs/init.sh").absolutePath
+
+    return TerminalSession(
+        id = generateId(),
+        name = name,
+        shellPath = "/system/bin/sh",
+        initialCommand = initPath,
+        columns = columns,
+        rows = rows,
+        environmentConfig = envConfig
+    )
+}
+
         }
     }
     
