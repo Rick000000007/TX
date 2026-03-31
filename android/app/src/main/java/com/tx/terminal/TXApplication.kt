@@ -54,7 +54,7 @@ class TXApplication : Application() {
         applicationScope.launch {
                 try {
         // 🔥 Step 1: Userspace (BLOCKING)
-        UserspaceInstaller(this).installIfNeeded()
+        UserspaceInstaller(this@TXApplication).installIfNeeded()
         Log.i(TAG, "Userspace installed")
 
         // 🔥 Step 2: Verify directories
