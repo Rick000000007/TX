@@ -102,29 +102,49 @@ class TerminalSession(
         return true
     }
 
-    return try {
-        val process = ProcessBuilder(
-            "/system/bin/sh",
-            "-c",
-	    initialCommand ?: ""
-        )
-            .directory(File(environmentConfig?.workingDirectory ?: "/"))
-            .redirectErrorStream(true)
-            .start()
+    try {
+        val envConfig = environmentConfig
 
-        nativeHandle = process.hashCode().toLong()
+        if (envConfig != null) {
+            nativeHandle = NativeTerminal.createWithEnvironment(
+                columns,
+                rows,
+                shellPath,
+                initialCommand
+
+                envConfig.workingDirectory,
+                envConfig.environmentVariables
+            )
+        } else {
+            val context = TXApplication.instance
+            val fallbackEnv = TerminalEnvironment.initialize(context)
+
+            nativeHandle = NativeTerminal.createWithEnvironment(
+                columns,
+                rows,
+                shellPath,
+                initialCommand
+
+                fallbackEnv.workingDirectory,
+                fallbackEnv.environmentVariables
+            )
+        }
+
+        if (nativeHandle == 0L) {
+            _errorMessage.value = "Failed to create terminal"
+            return false
+        }
 
         _isRunning.value = true
         _errorMessage.value = null
 
-        Log.d(TAG, "Process started")
+        startReader()
 
-        true
+        return true
 
     } catch (e: Exception) {
-        Log.e(TAG, "Failed to start process", e)
         _errorMessage.value = e.message
-        false
+        return false
     }
 }
             
