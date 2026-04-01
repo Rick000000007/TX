@@ -96,41 +96,37 @@ class TerminalSession(
      * Initialize the native terminal
      * @return true if initialization succeeded
      */
-    fun initialize(): Boolean {
-        if (nativeHandle != 0L) {
-            Log.w(TAG, "Session already initialized")
-            return true
-        }
-        
-        try {
-            // Get environment configuration
-            val envConfig = environmentConfig
-            
-            if (envConfig != null) {
-                // Use proper environment setup
-                ProcessBuilder("/system/bin/sh", initialCommand ?: "").start()
-                nativeHandle = NativeTerminal.createWithEnvironment(
-                    columns,
-                    rows,
-                    shellPath,
-                    initialCommand,
-                    envConfig.workingDirectory,
-                    envConfig.environmentVariables
-                )
-            } else {
-                // Fallback to basic setup (should not happen in normal flow)
-                Log.w(TAG, "No environment config provided, using fallback")
-                val context = TXApplication.instance
-                val fallbackEnv = TerminalEnvironment.initialize(context)
-                nativeHandle = NativeTerminal.createWithEnvironment(
-                    columns,
-                    rows,
-                    shellPath,
-                    initialCommand,
-                    fallbackEnv.workingDirectory,
-                    fallbackEnv.environmentVariables
-                )
-            }
+       fun initialize(): Boolean {
+    if (nativeHandle != 0L) {
+        Log.w(TAG, "Session already initialized")
+        return true
+    }
+
+    return try {
+        val process = ProcessBuilder(
+            "/system/bin/sh",
+            "-c",
+	    initialCommand ?: ""
+        )
+            .directory(File(environmentConfig?.workingDirectory ?: "/"))
+            .redirectErrorStream(true)
+            .start()
+
+        nativeHandle = process.hashCode().toLong()
+
+        _isRunning.value = true
+        _errorMessage.value = null
+
+        Log.d(TAG, "Process started")
+
+        true
+
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to start process", e)
+        _errorMessage.value = e.message
+        false
+    }
+}
             
             if (nativeHandle == 0L) {
                 Log.e(TAG, "Failed to create native terminal")
