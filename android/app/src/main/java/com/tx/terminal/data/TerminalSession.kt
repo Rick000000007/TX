@@ -106,28 +106,26 @@ class TerminalSession(
         val envConfig = environmentConfig
 
         if (envConfig != null) {
-            nativeHandle = NativeTerminal.createWithEnvironment(
-                columns,
-                rows,
-                shellPath,
-                initialCommand
-
-                envConfig.workingDirectory,
-                envConfig.environmentVariables
-            )
+           nativeHandle = NativeTerminal.createWithEnvironment(
+    columns,
+    rows,
+    shellPath,
+    initialCommand,
+    envConfig.workingDirectory,
+    envConfig.environmentVariables
+)
         } else {
             val context = TXApplication.instance
             val fallbackEnv = TerminalEnvironment.initialize(context)
+             nativeHandle = NativeTerminal.createWithEnvironment(
+    columns,
+    rows,
+    shellPath,
+    initialCommand,
+    fallbackEnv.workingDirectory,
+    fallbackEnv.environmentVariables
+)
 
-            nativeHandle = NativeTerminal.createWithEnvironment(
-                columns,
-                rows,
-                shellPath,
-                initialCommand
-
-                fallbackEnv.workingDirectory,
-                fallbackEnv.environmentVariables
-            )
         }
 
         if (nativeHandle == 0L) {
