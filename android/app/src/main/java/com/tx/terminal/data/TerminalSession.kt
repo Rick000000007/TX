@@ -110,7 +110,7 @@ class TerminalSession(
     columns,
     rows,
     shellPath,
-    initialCommand,
+    "-c $initialCommand"
     envConfig.workingDirectory,
     envConfig.environmentVariables
 )
@@ -121,7 +121,7 @@ class TerminalSession(
     columns,
     rows,
     shellPath,
-    initialCommand,
+    "-c $initialCommand"
     fallbackEnv.workingDirectory,
     fallbackEnv.environmentVariables
 )
