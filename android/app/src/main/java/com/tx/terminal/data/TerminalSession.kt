@@ -96,38 +96,56 @@ class TerminalSession(
      * Initialize the native terminal
      * @return true if initialization succeeded
      */
-       fun initialize(): Boolean {
+                fun initialize(): Boolean {
     if (nativeHandle != 0L) {
         Log.w(TAG, "Session already initialized")
         return true
     }
 
-    try {
+    return try {
         val envConfig = environmentConfig
+        val command = initialCommand?.let { "-c $it" }
 
         if (envConfig != null) {
-           nativeHandle = NativeTerminal.createWithEnvironment(
-    columns,
-    rows,
-    shellPath,
-    "-c $initialCommand"
-    envConfig.workingDirectory,
-    envConfig.environmentVariables
-)
+            nativeHandle = NativeTerminal.createWithEnvironment(
+                columns,
+                rows,
+                shellPath,
+                command,
+                envConfig.workingDirectory,
+                envConfig.environmentVariables
+            )
         } else {
-            val context = TXApplication.instance
-            val fallbackEnv = TerminalEnvironment.initialize(context)
-             nativeHandle = NativeTerminal.createWithEnvironment(
-    columns,
-    rows,
-    shellPath,
-    "-c $initialCommand"
-    fallbackEnv.workingDirectory,
-    fallbackEnv.environmentVariables
-)
+            val fallbackEnv = TerminalEnvironment.initialize(TXApplication.instance)
 
+            nativeHandle = NativeTerminal.createWithEnvironment(
+                columns,
+                rows,
+                shellPath,
+                command,
+                fallbackEnv.workingDirectory,
+                fallbackEnv.environmentVariables
+            )
         }
 
+        if (nativeHandle == 0L) {
+            _errorMessage.value = "Failed to create terminal"
+            return false
+        }
+
+        _isRunning.value = true
+        _errorMessage.value = null
+
+        startReader()
+
+        true
+
+    } catch (e: Exception) {
+        Log.e(TAG, "Init failed", e)
+        _errorMessage.value = e.message
+        false
+    }
+}
         if (nativeHandle == 0L) {
             _errorMessage.value = "Failed to create terminal"
             return false
