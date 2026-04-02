@@ -506,5 +506,3 @@ class SessionManager {
      */
     fun getSession(sessionId: String): TerminalSession? {
         return _sessions.value.find { it.id == sessionId }
-    }
-}
