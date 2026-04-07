@@ -111,7 +111,7 @@ class TerminalSession(
                 columns,
                 rows,
                 shellPath,
-                "sh $commandArg",
+                commandArg,
                 envConfig.workingDirectory,
                 envConfig.environmentVariables
             )
@@ -122,7 +122,7 @@ class TerminalSession(
                 columns,
                 rows,
                 shellPath,
-                "sh $commandArg",
+                commandArg,
                 fallbackEnv.workingDirectory,
                 fallbackEnv.environmentVariables
             )
