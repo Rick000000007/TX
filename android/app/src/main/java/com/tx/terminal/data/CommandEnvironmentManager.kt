@@ -128,7 +128,9 @@ class CommandEnvironmentManager(private val context: Context) {
 
     return mapOf(
         // ✅ CORRECT PATH (ONLY BUSYBOX)
-           "PATH" to "${File(context.filesDir, "rootfs/bin").absolutePath}:/system/bin"
+        val rootfsBin = File(context.filesDir, "rootfs/bin").absolutePath
+
+        "PATH" to "$rootfsBin:/system/bin"
 
         // ❌ REMOVE BROKEN LIB USAGE
         // (no LD_LIBRARY_PATH needed for now)
