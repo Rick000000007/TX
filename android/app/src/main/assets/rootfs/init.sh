@@ -9,4 +9,4 @@ exec $ROOTFS/bin/proot \
     -b /proc \
     -b /sys \
     -w /root \
-    /bin/sh
+    /bin/sh -c "export PATH=/bin:/usr/bin; exec /bin/sh"
