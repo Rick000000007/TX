@@ -104,14 +104,14 @@ class TerminalSession(
 
     return try {
         val envConfig = environmentConfig
-        val command = initialCommand?.let { "-c $it" }
+        val commandArg = initialCommand ?: ""
 
         if (envConfig != null) {
             nativeHandle = NativeTerminal.createWithEnvironment(
                 columns,
                 rows,
                 shellPath,
-                command,
+                "-c $commandArg"
                 envConfig.workingDirectory,
                 envConfig.environmentVariables
             )
@@ -122,16 +122,16 @@ class TerminalSession(
                 columns,
                 rows,
                 shellPath,
-                command,
+                "-c $commandArg"
                 fallbackEnv.workingDirectory,
                 fallbackEnv.environmentVariables
             )
         }
-
         if (nativeHandle == 0L) {
             _errorMessage.value = "Failed to create terminal"
             return false
         }
+
 
         _isRunning.value = true
         _errorMessage.value = null
@@ -146,24 +146,6 @@ class TerminalSession(
         false
     }
 }
-        if (nativeHandle == 0L) {
-            _errorMessage.value = "Failed to create terminal"
-            return false
-        }
-
-        _isRunning.value = true
-        _errorMessage.value = null
-
-        startReader()
-
-        return true
-
-    } catch (e: Exception) {
-        _errorMessage.value = e.message
-        return false
-    }
-}
-            
     private fun startReader() {
         scope.launch {
             while (isActive && _isRunning.value) {
