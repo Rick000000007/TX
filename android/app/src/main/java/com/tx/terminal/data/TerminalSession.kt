@@ -104,7 +104,7 @@ class TerminalSession(
 
     return try {
         val envConfig = environmentConfig
-        val commandArg = initialCommand ?: ""
+        val commandArg = "sh $initialCommand"
 
         if (envConfig != null) {
             nativeHandle = NativeTerminal.createWithEnvironment(
