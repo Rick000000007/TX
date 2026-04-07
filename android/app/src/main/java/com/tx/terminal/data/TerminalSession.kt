@@ -50,13 +50,13 @@ class TerminalSession(
     val envConfig = TerminalEnvironment.initialize(context)
 
     // ✅ path to init.sh
-    val initPath = File(context.filesDir, "rootfs/init.sh").absolutePath
+    val shellPath = File(context.filesDir, "rootfs/bin/sh").absolutePath
 
-    return TerminalSession(
+        return TerminalSession(
         id = generateId(),
         name = name,
-        shellPath = "/system/bin/sh",
-        initialCommand = initPath,
+        shellPath = shellPath,
+        initialCommand = null,
         columns = columns,
         rows = rows,
         environmentConfig = envConfig

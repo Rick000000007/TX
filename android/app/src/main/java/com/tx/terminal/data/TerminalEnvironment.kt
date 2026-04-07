@@ -139,7 +139,7 @@ object TerminalEnvironment {
     }
 
     // Optional: override PATH (recommended)
-    env["PATH"] = "$rootfsPath/bin:${pathBuilder}"
+    env["PATH"] = "$rootfsPath/bin:/system/bin"
 
     // User + locale
     env["USER"] = "shell"
